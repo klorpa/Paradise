@@ -607,6 +607,8 @@ in the SQL/updates folder.
 
 * All new var/proc names should use the American English spelling of words. This is for consistency with BYOND.
 
+* If you are making a PR that adds a config option to change existing behaviour, said config option must default to as close to as current behaviour as possible.
+
 ### Dream Maker Quirks/Tricks
 
 Like all languages, Dream Maker has its quirks, some of them are beneficial to us, like these:
@@ -721,15 +723,16 @@ Each role inherits the lower role's responsibilities (IE: Headcoders also have c
 
 `Headcoders` are the overarching "administrators" of the repository. People included in this role are:
 
-* [AffectedArc07](https://github.com/AffectedArc07)
 * [Charliminator](https://github.com/hal9000PR)
+* [farie82](https://github.com/farie82)
 * [Fox P McCloud](https://github.com/Fox-McCloud)
 
 ---
 
 `Commit Access` members have write access to the repository and can merge your PRs. People included in this role are:
 
-* [farie82](https://github.com/farie82)
+
+* [Sirryan2002](https://github.com/Sirryan2002)
 * [SteelSlayer](https://github.com/SteelSlayer)
 
 ---
@@ -737,7 +740,7 @@ Each role inherits the lower role's responsibilities (IE: Headcoders also have c
 `Review Team` members are people who are denoted as having reviews which can affect mergeability status. People included in this role are:
 
 * [lewcc](https://github.com/lewcc)
-* [Sirryan2002](https://github.com/Sirryan2002)
+* [S34N](https://github.com/S34NW)
 
 ---
 

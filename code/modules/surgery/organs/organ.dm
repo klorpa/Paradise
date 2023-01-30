@@ -15,8 +15,8 @@
 	var/parent_organ = "chest"
 
 	var/list/datum/autopsy_data/autopsy_data = list()
-	var/list/trace_chemicals = list() // traces of chemicals in the organ,
-									  // links chemical IDs to number of ticks for which they'll stay in the blood
+	var/list/trace_chemicals = list()	// traces of chemicals in the organ,
+										// links chemical IDs to number of ticks for which they'll stay in the blood
 	germ_level = 0
 	var/datum/dna/dna
 
@@ -291,13 +291,8 @@ I use this so that this can be made better once the organ overhaul rolls out -- 
 
 /obj/item/organ/serialize()
 	var/data = ..()
-	if(status != 0)
+	if(status)
 		data["status"] = status
-
-	// Save the DNA datum if: The owner doesn't exist, or the dna doesn't match the owner
-	// Don't save when the organ has no initialized DNA. Happens when you spawn it in as admin
-	if(dna.unique_enzymes && !(owner && dna.unique_enzymes == owner.dna.unique_enzymes))
-		data["dna"] = dna.serialize()
 	return data
 
 /obj/item/organ/deserialize(data)
@@ -305,8 +300,4 @@ I use this so that this can be made better once the organ overhaul rolls out -- 
 		if(data["status"] & ORGAN_ROBOT)
 			robotize()
 		status = data["status"]
-	if(islist(data["dna"]))
-		// The only thing the official proc does is
-	 	//instantiate the list and call this proc
-		dna.deserialize(data["dna"])
-		..()
+	..()

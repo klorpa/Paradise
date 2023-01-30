@@ -48,7 +48,7 @@
 	occupant = user
 	update_icon(UPDATE_OVERLAYS)
 	feedinTopanim()
-	addtimer(CALLBACK(src, .proc/startgibbing, user), 33)
+	addtimer(CALLBACK(src, PROC_REF(startgibbing), user), 33)
 	return OBLITERATION
 
 /obj/machinery/gibber/update_overlays()
@@ -100,7 +100,7 @@
 	if(exchange_parts(user, P))
 		return
 
-	if(default_unfasten_wrench(user, P))
+	if(default_unfasten_wrench(user, P, time = 4 SECONDS))
 		return
 
 	if(default_deconstruction_crowbar(user, P))
@@ -147,7 +147,7 @@
 		occupant = victim
 
 		update_icon(UPDATE_OVERLAYS)
-		feedinTopanim()
+		INVOKE_ASYNC(src, PROC_REF(feedinTopanim))
 
 /obj/machinery/gibber/verb/eject()
 	set category = "Object"
@@ -279,7 +279,7 @@
 
 	occupant.emote("scream")
 	playsound(get_turf(src), 'sound/goonstation/effects/gib.ogg', 50, 1)
-	victims += "\[[time_stamp()]\] [key_name(occupant)] killed by [UserOverride ? "Autogibbing" : "[key_name(user)]"]" //have to do this before ghostizing
+	victims += "\[[all_timestamps()]\] [key_name(occupant)] killed by [UserOverride ? "Autogibbing" : "[key_name(user)]"]" //have to do this before ghostizing
 	occupant.death(1)
 	occupant.ghostize()
 
@@ -377,7 +377,7 @@
 	if(!istype(H))	return 0
 	if(H != occupant)	return 0 //only using H as a shortcut to typecast
 	for(var/obj/O in H)
-		if(istype(O,/obj/item/clothing)) //clothing gets skipped to avoid cleaning out shit
+		if(isclothing(O)) //clothing gets skipped to avoid cleaning out shit
 			continue
 		if(istype(O,/obj/item/implant))
 			var/obj/item/implant/I = O

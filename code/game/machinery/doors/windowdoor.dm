@@ -62,6 +62,8 @@
 	. = ..()
 	if(emagged)
 		. += "<span class='warning'>Its access panel is smoking slightly.</span>"
+	if(HAS_TRAIT(src, TRAIT_CMAGGED))
+		. += "<span class='warning'>The access panel is coated in yellow ooze...</span>"
 
 /obj/machinery/door/window/emp_act(severity)
 	. = ..()
@@ -70,10 +72,19 @@
 
 /obj/machinery/door/window/proc/open_and_close()
 	open()
-	if(check_access(null))
-		sleep(50)
-	else //secure doors close faster
-		sleep(20)
+	addtimer(CALLBACK(src, PROC_REF(check_close)), check_access(null) ? 5 SECONDS : 2 SECONDS)
+
+
+/// Check whether or not this door can close, based on whether or not someone's standing in front of it holding it open
+/obj/machinery/door/window/proc/check_close()
+	var/mob/living/blocker = locate(/mob/living) in get_turf(get_step(src, dir))  // check the facing turf
+	if(!blocker || blocker.stat || !allowed(blocker))
+		blocker = locate(/mob/living) in get_turf(src)
+	if(blocker && !blocker.stat && allowed(blocker))
+		// kick the can down the road, someone's holding the door.
+		addtimer(CALLBACK(src, PROC_REF(check_close)), check_access(null) ? 5 SECONDS : 2 SECONDS)
+		return
+
 	close()
 
 /obj/machinery/door/window/Bumped(atom/movable/AM)
@@ -83,8 +94,14 @@
 		if(ismecha(AM))
 			var/obj/mecha/mecha = AM
 			if(mecha.occupant && allowed(mecha.occupant))
+				if(HAS_TRAIT(src, TRAIT_CMAGGED))
+					cmag_switch(FALSE)
+					return
 				open_and_close()
 			else
+				if(HAS_TRAIT(src, TRAIT_CMAGGED))
+					cmag_switch(TRUE)
+					return
 				do_animate("deny")
 		return
 	if(!SSticker)
@@ -98,8 +115,14 @@
 		return
 	add_fingerprint(user)
 	if(!requiresID() || allowed(user))
+		if(HAS_TRAIT(src, TRAIT_CMAGGED))
+			cmag_switch(FALSE, user)
+			return
 		open_and_close()
 	else
+		if(HAS_TRAIT(src, TRAIT_CMAGGED))
+			cmag_switch(TRUE, user)
+			return
 		do_animate("deny")
 
 /obj/machinery/door/window/unrestricted_side(mob/M)
@@ -134,7 +157,7 @@
 		return 1
 
 //used in the AStar algorithm to determinate if the turf the door is on is passable
-/obj/machinery/door/window/CanAStarPass(obj/item/card/id/ID, to_dir)
+/obj/machinery/door/window/CanPathfindPass(obj/item/card/id/ID, to_dir, no_id = FALSE)
 	return !density || (dir != to_dir) || (check_access(ID) && hasPower())
 
 /obj/machinery/door/window/CheckExit(atom/movable/mover, turf/target)
@@ -155,7 +178,7 @@
 		if(emagged)
 			return 0
 	if(!operating) //in case of emag
-		operating = TRUE
+		operating = DOOR_OPENING
 	do_animate("opening")
 	set_opacity(FALSE)
 	playsound(loc, 'sound/machines/windowdoor.ogg', 100, 1)
@@ -168,7 +191,7 @@
 	update_freelook_sight()
 
 	if(operating) //emag again
-		operating = FALSE
+		operating = NONE
 	return 1
 
 /obj/machinery/door/window/close(forced=0)
@@ -180,7 +203,7 @@
 	if(forced < 2)
 		if(emagged)
 			return 0
-	operating = TRUE
+	operating = DOOR_CLOSING
 	do_animate("closing")
 	playsound(loc, 'sound/machines/windowdoor.ogg', 100, 1)
 	icon_state = base_state
@@ -192,7 +215,7 @@
 	update_freelook_sight()
 	sleep(10)
 
-	operating = FALSE
+	operating = NONE
 	return 1
 
 /obj/machinery/door/window/play_attack_sound(damage_amount, damage_type = BRUTE, damage_flag = 0)
@@ -238,14 +261,25 @@
 /obj/machinery/door/window/emag_act(mob/user, obj/weapon)
 	if(!operating && density && !emagged)
 		emagged = TRUE
-		operating = TRUE
+		operating = DOOR_MALF
 		electronics = new /obj/item/airlock_electronics/destroyed()
 		flick("[base_state]spark", src)
 		playsound(src, "sparks", 75, TRUE, SHORT_RANGE_SOUND_EXTRARANGE)
 		sleep(6)
-		operating = FALSE
+		operating = NONE
 		open(2)
 		return 1
+
+/obj/machinery/door/window/cmag_act(mob/user, obj/weapon)
+	if(operating || !density || HAS_TRAIT(src, TRAIT_CMAGGED))
+		return
+	ADD_TRAIT(src, TRAIT_CMAGGED, CLOWN_EMAG)
+	operating = DOOR_MALF
+	flick("[base_state]spark", src)
+	playsound(src, "sparks", 75, TRUE, SHORT_RANGE_SOUND_EXTRARANGE)
+	sleep(6)
+	operating = NONE
+	return TRUE
 
 /obj/machinery/door/window/attackby(obj/item/I, mob/living/user, params)
 	//If it's in the process of opening/closing, ignore the click
@@ -278,7 +312,7 @@
 		return
 	if(panel_open && !density && !operating)
 		user.visible_message("<span class='warning'>[user] removes the electronics from the [name].</span>", \
-							 "You start to remove electronics from the [name]...")
+							"You start to remove electronics from the [name]...")
 		if(I.use_tool(src, user, 40, volume = I.tool_volume))
 			if(panel_open && !density && !operating && loc)
 				var/obj/structure/windoor_assembly/WA = new /obj/structure/windoor_assembly(loc)

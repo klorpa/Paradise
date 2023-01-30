@@ -54,14 +54,13 @@
 	icon_state = "floor_magnet[on ? "" : "0"][invisibility ? "-f" : ""]"	// if invisible, set icon to faded version
 											// in case of being revealed by T-scanner
 
+// This is the LAST thing allowed to use this
 /obj/machinery/magnetic_module/receive_signal(datum/signal/signal)
 	var/command = signal.data["command"]
 	var/modifier = signal.data["modifier"]
 	var/signal_code = signal.data["code"]
 	if(command && (signal_code == code))
 		Cmd(command, modifier)
-
-
 
 /obj/machinery/magnetic_module/proc/Cmd(command, modifier)
 	if(command)
@@ -159,7 +158,7 @@
 					step_towards(M, center)
 
 			for(var/mob/living/silicon/S in orange(magnetic_field, center))
-				if(istype(S, /mob/living/silicon/ai)) continue
+				if(isAI(S)) continue
 				step_towards(S, center)
 
 		use_power(electricity_level * 5)
@@ -175,7 +174,9 @@
 	anchored = TRUE
 	use_power = IDLE_POWER_USE
 	idle_power_usage = 45
-	frequency = AIRLOCK_FREQ
+	// this is a temp measure
+	var/frequency = AIRLOCK_FREQ
+	var/datum/radio_frequency/radio_connection
 	var/code = 0
 	var/list/magnets = list()
 	var/title = "Magnetic Control Console"
@@ -220,7 +221,7 @@
 	for(var/obj/machinery/magnetic_module/M in GLOB.machines)
 		if(M.freq == frequency && M.code == code)
 			magnets.Add(M)
-			RegisterSignal(M, COMSIG_PARENT_QDELETING, .proc/on_magnet_del)
+			RegisterSignal(M, COMSIG_PARENT_QDELETING, PROC_REF(on_magnet_del))
 
 /obj/machinery/magnetic_controller/process()
 	if(magnets.len == 0 && autolink)

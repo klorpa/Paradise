@@ -35,7 +35,7 @@ GLOBAL_DATUM_INIT(_preloader, /datum/dmm_suite/preloader, new())
 		if(lastchar == "/" || lastchar == "\\")
 			log_debug("Attempted to load map template without filename (Attempted [tfile])")
 			return
-		tfile = file2text(tfile)
+		tfile = wrap_file2text(tfile)
 		if(!length(tfile))
 			throw EXCEPTION("Map path '[fname]' does not exist!")
 
@@ -288,7 +288,7 @@ GLOBAL_DATUM_INIT(_preloader, /datum/dmm_suite/preloader, new())
 		var/mlen = members.len - 1
 		while(index <= mlen) // Last item is an /area
 			var/underlay
-			if(istype(T, /turf)) // I blame this on the stupid clown who coded the BYOND map editor
+			if(isturf(T)) // I blame this on the stupid clown who coded the BYOND map editor
 				underlay = T.appearance
 			T = instance_atom(members[index], members_attributes[index], xcrd, ycrd, zcrd) // instance new turf
 			if(ispath(members[index], /turf))
@@ -407,7 +407,7 @@ GLOBAL_DATUM_INIT(_preloader, /datum/dmm_suite/preloader, new())
 
 	// Check for file
 	else if(copytext(value_text, 1, 2) == "'")
-		. = file(copytext(value_text, 2, length(value_text)))
+		. = wrap_file(copytext(value_text, 2, length(value_text)))
 
 	// Check for path
 	else if(ispath(text2path(value_text)))

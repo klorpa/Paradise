@@ -44,6 +44,9 @@ Pipelines + Other Objects -> Pipe network
 	/// Pipe image, not used for all subtypes
 	var/image/pipe_image
 
+	/// ID for automatic linkage of stuff. This is used to assist in connections at mapload. Dont try use it for other stuff
+	var/autolink_id = null
+
 
 /obj/machinery/atmospherics/Initialize(mapload)
 	. = ..()
@@ -73,12 +76,6 @@ Pipelines + Other Objects -> Pipe network
 		L.forceMove(get_turf(src))
 	QDEL_NULL(pipe_image) //we have to qdel it, or it might keep a ref somewhere else
 	return ..()
-
-/obj/machinery/atmospherics/set_frequency(new_frequency)
-	SSradio.remove_object(src, frequency)
-	frequency = new_frequency
-	if(frequency)
-		radio_connection = SSradio.add_object(src, frequency, RADIO_ATMOSIA)
 
 // Icons/overlays/underlays
 /obj/machinery/atmospherics/update_icon()
@@ -157,6 +154,13 @@ Pipelines + Other Objects -> Pipe network
 /obj/machinery/atmospherics/proc/returnPipenet()
 	return
 
+/**
+ * Whether or not this atmos machine has multiple pipenets attached to it
+ * Used to determine if a ventcrawler should update their vision or not
+ */
+/obj/machinery/atmospherics/proc/is_pipenet_split()
+	return FALSE
+
 /obj/machinery/atmospherics/proc/returnPipenetAir()
 	return
 
@@ -216,6 +220,12 @@ Pipelines + Other Objects -> Pipe network
 				to_chat(user, "<span class='warning'>As you begin unwrenching \the [src] a gust of air blows in your face... maybe you should reconsider?</span>")
 
 		if(do_after(user, 40 * W.toolspeed, target = src) && !QDELETED(src))
+			for(var/obj/item/clothing/shoes/magboots/usermagboots in user.get_equipped_items())
+				if(usermagboots.gustprotection && usermagboots.magpulse) // Check again, incase they change magpulse mid-wrench
+					safefromgusts = TRUE
+				else
+					safefromgusts = FALSE
+
 			user.visible_message( \
 				"<span class='notice'>[user] unfastens \the [src].</span>", \
 				"<span class='notice'>You have unfastened \the [src].</span>", \
@@ -311,7 +321,7 @@ Pipelines + Other Objects -> Pipe network
 			user.forceMove(target_move.loc) //handles entering and so on
 			user.visible_message("You hear something squeezing through the ducts.", "You climb out of the ventilation system.")
 		else if(target_move.can_crawl_through())
-			if(returnPipenet(target_move) != target_move.returnPipenet())
+			if(is_pipenet_split()) // Going away from a split means we want to update the view of the pipenet
 				user.update_pipe_vision(target_move)
 			user.forceMove(target_move)
 			if(world.time - user.last_played_vent > VENT_SOUND_DELAY)

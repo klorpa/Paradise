@@ -45,7 +45,7 @@
 /obj/machinery/biogenerator/Destroy()
 	QDEL_NULL(container)
 	QDEL_NULL(files)
-	QDEL_LIST(stored_plants)
+	QDEL_LIST_CONTENTS(stored_plants)
 	return ..()
 
 /obj/machinery/biogenerator/ex_act(severity)
@@ -93,7 +93,7 @@
 		container = null
 	return TRUE
 
-/obj/machinery/crowbar_act(mob/living/user, obj/item/I)
+/obj/machinery/biogenerator/crowbar_act(mob/living/user, obj/item/I)
 	return default_deconstruction_crowbar(user, I)
 
 /obj/machinery/biogenerator/attackby(obj/item/O, mob/user, params)
@@ -271,7 +271,7 @@
 	stored_plants.Cut()
 	playsound(loc, 'sound/machines/blender.ogg', 50, 1)
 	use_power(plants_processed * 150)
-	addtimer(CALLBACK(src, .proc/end_processing), (plants_processed * 5) / productivity)
+	addtimer(CALLBACK(src, PROC_REF(end_processing)), (plants_processed * 5) / productivity)
 
 /obj/machinery/biogenerator/proc/end_processing()
 	processing = FALSE

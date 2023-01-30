@@ -48,6 +48,10 @@
 	if(in_range(user, src) && has_camera)
 		. += "This helmet has a built-in camera. It's [camera ? "" : "in"]active."
 
+/obj/item/clothing/head/helmet/space/hardsuit/ert/Destroy()
+	QDEL_NULL(camera)
+	return ..()
+
 /obj/item/clothing/suit/space/hardsuit/ert
 	name = "emergency response team suit"
 	desc = "A suit worn by members of the Nanotrasen Emergency Response Team. Armoured, space ready, and fire resistant."
@@ -218,9 +222,7 @@
 	icon_state = "hardsuit0-ert_paranormal"
 	item_color = "ert_paranormal"
 	max_heat_protection_temperature = FIRE_IMMUNITY_MAX_TEMP_PROTECT
-	actions_types = list()
 	resistance_flags = FIRE_PROOF
-	has_camera = FALSE
 	sprite_sheets = list(
 		"Grey" = 'icons/mob/clothing/species/grey/helmet.dmi',
 		"Tajaran" = 'icons/mob/clothing/species/tajaran/helmet.dmi',
@@ -261,22 +263,6 @@
 	armor = list(MELEE = 95, BULLET = 50, LASER = 50, ENERGY = 50, BOMB = 50, BIO = INFINITY, RAD = INFINITY, FIRE = 200, ACID = 200)
 	slowdown = 0
 
-/obj/item/clothing/head/helmet/space/hardsuit/ert/paranormal/berserker
-	name = "champion's helmet"
-	desc = "Peering into the eyes of the helmet is enough to seal damnation."
-	icon_state = "hardsuit0-berserker"
-	item_color = "berserker"
-	max_heat_protection_temperature = SPACE_HELM_MAX_TEMP_PROTECT
-	armor = list(MELEE = 60, BULLET = 20, LASER = 15, ENERGY = 15, BOMB = 75, BIO = INFINITY, RAD = 25, FIRE = 200, ACID = 200)
-
-/obj/item/clothing/suit/space/hardsuit/ert/paranormal/berserker
-	name = "champion's hardsuit"
-	desc = "Voices echo from the hardsuit, driving the user insane."
-	icon_state = "hardsuit-berserker"
-	max_heat_protection_temperature = SPACE_SUIT_MAX_TEMP_PROTECT
-	helmettype = /obj/item/clothing/head/helmet/space/hardsuit/ert/paranormal/berserker
-	armor = list(MELEE = 60, BULLET = 20, LASER = 15, ENERGY = 15, BOMB = 75, BIO = INFINITY, RAD = 25, FIRE = 200, ACID = 200)
-	slowdown = 0
 
 // Solgov
 

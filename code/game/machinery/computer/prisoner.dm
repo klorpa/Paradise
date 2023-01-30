@@ -18,8 +18,8 @@
 	GLOB.prisoncomputer_list += src
 
 /obj/machinery/computer/prisoner/Destroy()
- 	GLOB.prisoncomputer_list -= src
- 	return ..()
+	GLOB.prisoncomputer_list -= src
+	return ..()
 
 /obj/machinery/computer/prisoner/attackby(obj/item/O, mob/user, params)
 	var/datum/ui_login/state = ui_login_get()
@@ -41,6 +41,11 @@
 		return TRUE
 	add_fingerprint(user)
 	ui_interact(user)
+
+/obj/machinery/computer/prisoner/attackby(obj/item/O, mob/user)
+	if(ui_login_attackby(O, user))
+		return
+	return ..()
 
 /obj/machinery/computer/prisoner/proc/check_implant(obj/item/implant/I)
 	var/turf/implant_location = get_turf(I)
@@ -90,11 +95,10 @@
 		else if(total_loss)
 			health_display = "HURT ([total_loss])"
 		var/turf/implant_location = get_turf(T)
-		if(!istype(implant_location, /turf/space))
+		if(!isspaceturf(implant_location))
 			loc_display = "[get_area(implant_location)]"
 
 		var/list/implant_info = list(
-			"id" = T.id,
 			"subject" = M.name,
 			"location" = loc_display,
 			"health" = health_display,
@@ -167,12 +171,12 @@
 					if(!implant)
 						return
 					if(implant.warn_cooldown >= world.time)
-						to_chat(user, "<span class='warning'>The warning system for that implant is still cooling down.</span>")
+						to_chat(user, "<span class='warning'>The warning system for that bio-chip is still cooling down.</span>")
 						return
 					implant.warn_cooldown = world.time + IMPLANT_WARN_COOLDOWN
 					if(implant.imp_in)
 						var/mob/living/carbon/implantee = implant.imp_in
-						var/warning = copytext(sanitize(text2num(answer)), 1, MAX_MESSAGE_LEN)
+						var/warning = copytext(sanitize(answer), 1, MAX_MESSAGE_LEN)
 						to_chat(implantee, "<span class='boldnotice'>Your skull vibrates violently as a loud announcement is broadcasted to you: '[warning]'</span>")
 
 				if("set_points")

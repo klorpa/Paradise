@@ -529,7 +529,7 @@ NOTE: there are two lists of areas in the end of this file: centcom and station 
 	name = "\improper Wizard's Den"
 	icon_state = "yellow"
 	requires_power = FALSE
-	dynamic_lighting = DYNAMIC_LIGHTING_DISABLED
+	dynamic_lighting = DYNAMIC_LIGHTING_FORCED
 
 /area/ninja
 	name = "\improper Ninja Area Parent"
@@ -553,28 +553,19 @@ NOTE: there are two lists of areas in the end of this file: centcom and station 
 /area/trader_station/sol
 	name = "Jupiter Station 6"
 
-//Labor camp
-/area/mine/laborcamp
-	name = "Labor Camp"
-	icon_state = "brig"
-
-/area/mine/laborcamp/security
-	name = "Labor Camp Security"
-	icon_state = "security"
-
 //STATION13
 
 /area/atmos
- 	name = "Atmospherics"
- 	icon_state = "atmos"
+	name = "Atmospherics"
+	icon_state = "atmos"
 
 /area/atmos/control
- 	name = "Atmospherics Control Room"
- 	icon_state = "atmosctrl"
+	name = "Atmospherics Control Room"
+	icon_state = "atmosctrl"
 
 /area/atmos/distribution
- 	name = "Atmospherics Distribution Loop"
- 	icon_state = "atmos"
+	name = "Atmospherics Distribution Loop"
+	icon_state = "atmos"
 
 //Maintenance
 /area/maintenance
@@ -681,6 +672,42 @@ NOTE: there are two lists of areas in the end of this file: centcom and station 
 	name = "Waste Disposal"
 	icon_state = "disposals"
 
+/area/maintenance/disposal/southwest
+	name = "South Western Disposals"
+
+/area/maintenance/disposal/south
+	name = "Southern Disposals"
+
+/area/maintenance/disposal/east
+	name = "Eastern Disposals"
+
+/area/maintenance/disposal/northeast
+	name = "North Eastern Disposals"
+
+/area/maintenance/disposal/north
+	name = "Northern Disposals"
+
+/area/maintenance/disposal/northwest
+	name = "North Western Disposals"
+
+/area/maintenance/disposal/west
+	name = "Western Disposals"
+
+/area/maintenance/disposal/westalt
+	name = "Western Secondary Disposals"
+
+/area/maintenance/disposal/external/southwest
+	name = "South-Western External Waste Belt"
+
+/area/maintenance/disposal/external/southeast
+	name = "South-Eastern External Waste Belt"
+
+/area/maintenance/disposal/external/east
+	name="Eastern External Waste Belt"
+
+/area/maintenance/disposal/external/north
+	name = "Northern External Waste Belt"
+
 /area/maintenance/genetics
 	name = "Genetics Maintenance"
 	icon_state = "asmaint"
@@ -695,6 +722,10 @@ NOTE: there are two lists of areas in the end of this file: centcom and station 
 	power_equip = 0
 	power_light = 0
 	power_environ = 0
+
+/area/maintenance/library
+	name = "Abandoned Library"
+	icon_state = "library"
 
 /area/maintenance/spacehut
 	name = "Space Hut"
@@ -726,17 +757,49 @@ NOTE: there are two lists of areas in the end of this file: centcom and station 
 	name = "\improper Fore Primary Hallway"
 	icon_state = "hallF"
 
+/area/hallway/primary/fore/west
+	name = "\improper Fore West Hallway"
+
+/area/hallway/primary/fore/east
+	name = "\improper Fore East Hallway"
+
+/area/hallway/primary/fore/north
+	name = "\improper Fore North Hallway"
+
+/area/hallway/primary/fore/south
+	name = "\improper Fore South Hallway"
+
 /area/hallway/primary/starboard
 	name = "\improper Starboard Primary Hallway"
 	icon_state = "hallS"
 
 /area/hallway/primary/starboard/west
+	name = "\improper Starboard West Hallway"
+
 /area/hallway/primary/starboard/east
+	name = "\improper Starboard East Hallway"
+
+/area/hallway/primary/starboard/north
+	name = "\improper Starboard North Hallway"
+
+/area/hallway/primary/starboard/south
+	name = "\improper Starboard South Hallway"
 
 /area/hallway/primary/aft
 	name = "\improper Aft Primary Hallway"
 	icon_state = "hallA"
 
+/area/hallway/primary/aft/west
+	name = "\improper Aft West Hallway"
+
+/area/hallway/primary/aft/east
+	name = "\improper Aft East Hallway"
+
+/area/hallway/primary/aft/north
+	name = "\improper Aft North Hallway"
+
+/area/hallway/primary/aft/south
+	name = "\improper Aft South Hallway"
 
 /area/hallway/primary/port
 	name = "\improper Port Primary Hallway"
@@ -747,6 +810,12 @@ NOTE: there are two lists of areas in the end of this file: centcom and station 
 
 /area/hallway/primary/port/east
 	name = "\improper Port East Hallway"
+
+/area/hallway/primary/port/north
+	name = "\improper Port North Hallway"
+
+/area/hallway/primary/port/south
+	name = "\improper Port South Hallway"
 
 /area/hallway/primary/central
 	name = "\improper Central Primary Hallway"
@@ -760,6 +829,36 @@ NOTE: there are two lists of areas in the end of this file: centcom and station 
 /area/hallway/primary/central/ne
 /area/hallway/primary/central/sw
 /area/hallway/primary/central/se
+/area/hallway/spacebridge
+	sound_environment = SOUND_AREA_LARGE_ENCLOSED
+	icon_state = "hall_space"
+
+/area/hallway/spacebridge/dockmed
+	name = "Docking-Medical Bridge"
+
+/area/hallway/spacebridge/scidock
+	name = "Science-Docking Bridge"
+
+/area/hallway/spacebridge/servsci
+	name = "Service-Science Bridge"
+
+/area/hallway/spacebridge/serveng
+	name = "Service-Engineering Bridge"
+
+/area/hallway/spacebridge/engmed
+	name = "Engineering-Medical Bridge"
+
+/area/hallway/spacebridge/medcargo
+	name = "Medical-Cargo Bridge"
+
+/area/hallway/spacebridge/cargocom
+	name = "Cargo-AI-Command Bridge"
+
+/area/hallway/spacebridge/sercom
+	name = "Command-Service Bridge"
+
+/area/hallway/spacebridge/comeng
+	name = "Command-Engineering Bridge"
 
 /area/hallway/secondary/exit
 	name = "\improper Escape Shuttle Hallway"
@@ -890,25 +989,13 @@ NOTE: there are two lists of areas in the end of this file: centcom and station 
 	sound_environment = SOUND_AREA_SMALL_ENCLOSED
 
 /area/crew_quarters/sleep
-	name = "\improper Dormitories"
+	name = "\improper Primary Cyrogenic Dormitories"
 	icon_state = "Sleep"
 	valid_territory = FALSE
 
-/area/crew_quarters/sleep_male
-	name = "\improper Male Dorm"
+/area/crew_quarters/sleep/secondary
+	name = "\improper Secondary Cyrogenic Dormitories"
 	icon_state = "Sleep"
-
-/area/crew_quarters/sleep_male/toilet_male
-	name = "\improper Male Toilets"
-	icon_state = "toilet"
-
-/area/crew_quarters/sleep_female
-	name = "\improper Female Dorm"
-	icon_state = "Sleep"
-
-/area/crew_quarters/sleep_female/toilet_female
-	name = "\improper Female Toilets"
-	icon_state = "toilet"
 
 /area/crew_quarters/locker
 	name = "\improper Locker Room"
@@ -961,10 +1048,6 @@ NOTE: there are two lists of areas in the end of this file: centcom and station 
 	icon_state = "library"
 	sound_environment = SOUND_AREA_LARGE_SOFTFLOOR
 
-/area/library/abandoned
-	name = "\improper Abandoned Library"
-	icon_state = "library"
-
 /area/chapel
 	icon_state = "chapel"
 	ambientsounds = HOLY_SOUNDS
@@ -992,6 +1075,9 @@ NOTE: there are two lists of areas in the end of this file: centcom and station 
 /area/clownoffice
 	name = "\improper Clown's Office"
 	icon_state = "clown_office"
+
+/area/clownoffice/secret
+	name = "\improper Top Secret Clown HQ"
 
 /area/mimeoffice
 	name = "\improper Mime's Office"
@@ -1137,6 +1223,10 @@ NOTE: there are two lists of areas in the end of this file: centcom and station 
 	icon_state = "aft"
 
 /area/solar/starboard
+	name = "\improper Starboard Solar Array"
+	icon_state = "ASsolars"
+
+/area/solar/starboard/aft
 	name = "\improper Aft Starboard Solar Array"
 	icon_state = "ASsolars"
 
@@ -1149,6 +1239,10 @@ NOTE: there are two lists of areas in the end of this file: centcom and station 
 	icon_state = "FPctrl"
 
 /area/maintenance/starboardsolar
+	name = "\improper Starboard Solar Maintenance"
+	icon_state = "ASctrl"
+
+/area/maintenance/starboardsolar/aft
 	name = "\improper Aft Starboard Solar Maintenance"
 	icon_state = "ASctrl"
 
@@ -1159,7 +1253,6 @@ NOTE: there are two lists of areas in the end of this file: centcom and station 
 /area/maintenance/auxsolarstarboard
 	name = "\improper Fore Starboard Solar Maintenance"
 	icon_state = "FSctrl"
-
 
 /area/assembly/chargebay
 	name = "\improper Mech Bay"
@@ -1186,6 +1279,18 @@ NOTE: there are two lists of areas in the end of this file: centcom and station 
 	name = "\improper Teleporter"
 	icon_state = "teleporter"
 	ambientsounds = ENGINEERING_SOUNDS
+
+/area/teleporter/quantum/security
+	name = "Security Quantum Pad"
+
+/area/teleporter/quantum/docking
+	name = "Docking Quantum Pad"
+
+/area/teleporter/quantum/science
+	name = "Science Quantum Pad"
+
+/area/teleporter/quantum/cargo
+	name = "Cargo Quantum Pad"
 
 /area/gateway
 	name = "\improper Gateway"
@@ -1854,10 +1959,6 @@ NOTE: there are two lists of areas in the end of this file: centcom and station 
 	name = "Secure Storage"
 	icon_state = "storage"
 
-/area/ai_monitored/storage/emergency
-	name = "Emergency Storage"
-	icon_state = "storage"
-
 /area/turret_protected/
 	ambientsounds = list('sound/ambience/ambimalf.ogg', 'sound/ambience/ambitech.ogg', 'sound/ambience/ambitech2.ogg', 'sound/ambience/ambiatmos.ogg', 'sound/ambience/ambiatmos2.ogg')
 
@@ -1874,6 +1975,7 @@ NOTE: there are two lists of areas in the end of this file: centcom and station 
 /area/turret_protected/ai
 	name = "\improper AI Chamber"
 	icon_state = "ai_chamber"
+	ambientsounds = list('sound/ambience/ambitech.ogg', 'sound/ambience/ambitech2.ogg', 'sound/ambience/ambiatmos.ogg', 'sound/ambience/ambiatmos2.ogg')
 
 /area/turret_protected/aisat
 	name = "\improper AI Satellite"
@@ -1886,17 +1988,26 @@ NOTE: there are two lists of areas in the end of this file: centcom and station 
 
 /area/aisat/entrance
 	name = "\improper AI Satellite Entrance"
-	icon_state = "ai"
 
 /area/aisat/maintenance
 	name = "\improper AI Satellite Maintenance"
-	icon_state = "ai"
+
+/area/aisat/atmos
+	name = "\improper AI Satellite Atmospherics"
+
+/area/aisat/hall
+	name = "\improper AI Satellite Hallway"
+
+/area/aisat/service
+	name = "\improper AI Satellite Service"
 
 /area/turret_protected/aisat_interior
 	name = "\improper AI Satellite Antechamber"
 	icon_state = "ai"
 	sound_environment = SOUND_AREA_LARGE_ENCLOSED
 
+/area/turret_protected/aisat_interior/secondary
+	name = "\improper AI Satellite Secondary Antechamber"
 
 //Misc
 
@@ -2140,7 +2251,6 @@ GLOBAL_LIST_INIT(the_station_areas, list(
 	/area/construction,
 	/area/ai_monitored/storage/eva, //do not try to simplify to "/area/ai_monitored" --rastaf0
 	/area/ai_monitored/storage/secure,
-	/area/ai_monitored/storage/emergency,
 	/area/turret_protected/ai_upload, //do not try to simplify to "/area/turret_protected" --rastaf0
 	/area/turret_protected/ai_upload_foyer,
 	/area/turret_protected/ai,
