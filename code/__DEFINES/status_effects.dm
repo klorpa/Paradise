@@ -39,6 +39,9 @@
 
 #define STATUS_EFFECT_DASH /datum/status_effect/dash // Grants the ability to dash, expiring after a few secodns
 
+/// Rapid burn/brute/oxy/blood healing from the cling ability
+#define STATUS_EFFECT_FLESHMEND /datum/status_effect/fleshmend
+
 #define STATUS_EFFECT_SPEEDLEGS /datum/status_effect/speedlegs //Handles cling speed boost and chemical cost.
 
 #define STATUS_EFFECT_PANACEA /datum/status_effect/panacea
@@ -121,6 +124,7 @@
 #define STATUS_EFFECT_DROWSINESS /datum/status_effect/transient/drowsiness
 #define STATUS_EFFECT_DRUNKENNESS /datum/status_effect/transient/drunkenness
 #define STATUS_EFFECT_SILENCED /datum/status_effect/transient/silence
+#define STATUS_EFFECT_ABSSILENCED /datum/status_effect/transient/silence/absolute
 #define STATUS_EFFECT_JITTER /datum/status_effect/transient/jittery
 #define STATUS_EFFECT_CULT_SLUR /datum/status_effect/transient/cult_slurring
 #define STATUS_EFFECT_STAMMER /datum/status_effect/transient/stammering
@@ -136,6 +140,8 @@
 /////////////
 
 #define STATUS_EFFECT_HIGHFIVE /datum/status_effect/high_five
+#define STATUS_EFFECT_DAP /datum/status_effect/high_five/dap
+#define STATUS_EFFECT_HANDSHAKE /datum/status_effect/high_five/handshake
 
 #define STATUS_EFFECT_CHARGING /datum/status_effect/charging
 
@@ -150,3 +156,6 @@
 #define STATUS_EFFECT_OFFERING_ITEM /datum/status_effect/offering_item
 
 #define STATUS_EFFECT_BLOB_BURST /datum/status_effect/blob_burst
+
+/// gives you fluff messages for cough, sneeze, headache, etc but without an actual virus
+#define STATUS_EFFECT_FAKE_VIRUS /datum/status_effect/fake_virus

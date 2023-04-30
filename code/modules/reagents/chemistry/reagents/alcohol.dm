@@ -780,14 +780,14 @@
 /datum/reagent/consumable/ethanol/singulo
 	name = "Singulo"
 	id = "singulo"
-	description = "A blue-space beverage!"
+	description = "A bluespace beverage!"
 	reagent_state = LIQUID
 	color = "#2E6671" // rgb: 46, 102, 113
 	dizzy_adj = 30 SECONDS
 	alcohol_perc = 0.7
 	drink_icon = "singulo"
 	drink_name = "Singulo"
-	drink_desc = "A blue-space beverage."
+	drink_desc = "A bluespace beverage."
 	taste_description = "infinity"
 
 /datum/reagent/consumable/ethanol/sbiten
@@ -1669,8 +1669,8 @@
 			if(L.is_dead() || !L.client) //we don't care about dead mobs
 				continue
 			targets += L
-		var/mob/living/target = pick(targets)
-		if(target)
+		if(length(targets))
+			var/mob/living/target = pick(targets)
 			to_chat(target, "<span class='warning'>You feel that [M.name] is somewhere near.</span>")
 	return ..()
 

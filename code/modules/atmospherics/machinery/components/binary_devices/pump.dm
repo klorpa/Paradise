@@ -25,8 +25,9 @@ Thus, the two variables affect pump operation are set in New():
 
 	var/id = null
 
-/obj/machinery/atmospherics/binary/pump/detailed_examine()
-	return "This moves gas from one pipe to another. A higher target pressure demands more energy. The side with the red end is the output."
+/obj/machinery/atmospherics/binary/pump/examine(mob/user)
+	. = ..()
+	. += "<span class='notice'>This moves gas from one pipe to another. A higher target pressure demands more energy. The side with the red end is the output.</span>"
 
 // So we can CtrlClick without triggering the anchored message.
 /obj/machinery/atmospherics/binary/pump/can_be_pulled(user, grab_state, force, show_message)
@@ -56,7 +57,7 @@ Thus, the two variables affect pump operation are set in New():
 	on = TRUE
 
 /obj/machinery/atmospherics/binary/pump/update_icon_state()
-	if(!powered())
+	if(!has_power())
 		icon_state = "off"
 	else
 		icon_state = "[on ? "on" : "off"]"
@@ -150,10 +151,9 @@ Thus, the two variables affect pump operation are set in New():
 		investigate_log("was set to [target_pressure] kPa by [key_name(usr)]", "atmos")
 
 /obj/machinery/atmospherics/binary/pump/power_change()
-	var/old_stat = stat
-	..()
-	if(old_stat != stat)
-		update_icon()
+	if(!..())
+		return
+	update_icon()
 
 /obj/machinery/atmospherics/binary/pump/attackby(obj/item/W, mob/user, params)
 	if(is_pen(W))

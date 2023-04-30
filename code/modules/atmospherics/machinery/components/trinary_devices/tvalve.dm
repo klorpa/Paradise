@@ -12,8 +12,9 @@
 
 	var/state = TVALVE_STATE_STRAIGHT
 
-/obj/machinery/atmospherics/trinary/tvalve/detailed_examine()
-	return "Click this to toggle the mode. The direction with the green light is where the gas will flow."
+/obj/machinery/atmospherics/trinary/tvalve/examine(mob/user)
+	. = ..()
+	. += "<span class='notice'>Click this to toggle the mode. The direction with the green light is where the gas will flow.</span>"
 
 /obj/machinery/atmospherics/trinary/tvalve/bypass
 	icon_state = "map_tvalve1"
@@ -124,20 +125,19 @@
 	state = TVALVE_STATE_SIDE
 
 /obj/machinery/atmospherics/trinary/tvalve/digital/power_change()
-	var/old_stat = stat
-	..()
-	if(old_stat != stat)
-		update_icon()
+	if(!..())
+		return
+	update_icon()
 
 /obj/machinery/atmospherics/trinary/tvalve/digital/update_icon_state()
-	if(!powered())
+	if(!has_power())
 		icon_state = "tvalvenopower"
 
 /obj/machinery/atmospherics/trinary/tvalve/digital/attack_ai(mob/user)
 	return attack_hand(user)
 
 /obj/machinery/atmospherics/trinary/tvalve/digital/attack_hand(mob/user)
-	if(!powered())
+	if(!has_power())
 		return
 	if(!allowed(user) && !user.can_advanced_admin_interact())
 		to_chat(user, "<span class='alert'>Access denied.</span>")

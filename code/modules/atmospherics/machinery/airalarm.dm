@@ -73,10 +73,9 @@
 	icon = 'icons/obj/monitors.dmi'
 	icon_state = "alarm0"
 	anchored = TRUE
-	use_power = IDLE_POWER_USE
-	idle_power_usage = 4
-	active_power_usage = 8
-	power_channel = ENVIRON
+	idle_power_consumption = 4
+	active_power_consumption = 8
+	power_channel = PW_CHANNEL_ENVIRONMENT
 	req_one_access = list(ACCESS_ATMOSPHERICS, ACCESS_ENGINE_EQUIP)
 	max_integrity = 250
 	integrity_failure = 80
@@ -155,6 +154,7 @@
 		"nitrogen"       = new/datum/tlv(-1.0, -1.0, -1.0, -1.0), // Partial pressure, kpa
 		"carbon dioxide" = new/datum/tlv(-1.0, -1.0, 5,  10), // Partial pressure, kpa
 		"plasma"         = new/datum/tlv(-1.0, -1.0, 0.2, 0.5), // Partial pressure, kpa
+		"nitrous oxide"  = new/datum/tlv(-1.0, -1.0, 0.2, 0.5), // Partial pressure, kpa
 		"other"          = new/datum/tlv(-1.0, -1.0, 0.5, 1.0), // Partial pressure, kpa
 		"pressure"       = new/datum/tlv(ONE_ATMOSPHERE*0.80,ONE_ATMOSPHERE*0.90,ONE_ATMOSPHERE*1.10,ONE_ATMOSPHERE*1.20), /* kpa */
 		"temperature"    = new/datum/tlv(T0C, T0C+10, T0C+40, T0C+66), // K
@@ -166,6 +166,7 @@
 				"nitrogen"       = new/datum/tlv(16, 19, 135, 140), // Partial pressure, kpa
 				"carbon dioxide" = new/datum/tlv(-1.0, -1.0, 5,  10), // Partial pressure, kpa
 				"plasma"         = new/datum/tlv(-1.0, -1.0, 0.2, 0.5), // Partial pressure, kpa
+				"nitrous oxide"  = new/datum/tlv(-1.0, -1.0, 0.2, 0.5), // Partial pressure, kpa
 				"other"          = new/datum/tlv(-1.0, -1.0, 0.5, 1.0), // Partial pressure, kpa
 				"pressure"       = new/datum/tlv(ONE_ATMOSPHERE*0.80,ONE_ATMOSPHERE*0.90,ONE_ATMOSPHERE*1.10,ONE_ATMOSPHERE*1.20), /* kpa */
 				"temperature"    = new/datum/tlv(T0C, T0C+10, T0C+40, T0C+66), // K
@@ -176,6 +177,7 @@
 				"nitrogen"       = new/datum/tlv(-1.0, -1.0, -1.0, -1.0), // Partial pressure, kpa
 				"carbon dioxide" = new/datum/tlv(-1.0, -1.0,   5,  10), // Partial pressure, kpa
 				"plasma"         = new/datum/tlv(-1.0, -1.0, 0.2, 0.5), // Partial pressure, kpa
+				"nitrous oxide"  = new/datum/tlv(-1.0, -1.0, 0.2, 0.5), // Partial pressure, kpa
 				"other"          = new/datum/tlv(-1.0, -1.0, 0.5, 1.0), // Partial pressure, kpa
 				"pressure"       = new/datum/tlv(ONE_ATMOSPHERE*0.80,ONE_ATMOSPHERE*0.90,ONE_ATMOSPHERE*1.50,ONE_ATMOSPHERE*1.60), /* kpa */
 				"temperature"    = new/datum/tlv(T0C-50, T0C-20, T0C, T20C), // K
@@ -186,6 +188,7 @@
 				"nitrogen"       = new/datum/tlv(-1.0, -1.0, -1.0, -1.0), // Partial pressure, kpa
 				"carbon dioxide" = new/datum/tlv(-1.0, -1.0, -1.0, -1.0), // Partial pressure, kpa
 				"plasma"         = new/datum/tlv(-1.0, -1.0, -1.0, -1.0), // Partial pressure, kpa
+				"nitrous oxide"  = new/datum/tlv(-1.0, -1.0, -1.0, -1.0), // Partial pressure, kpa
 				"other"          = new/datum/tlv(-1.0, -1.0, -1.0, -1.0), // Partial pressure, kpa
 				"pressure"       = new/datum/tlv(-1.0, -1.0, -1.0, -1.0), /* kpa */
 				"temperature"    = new/datum/tlv(0, 0, T20C + 5, T20C + 15), // K
@@ -197,6 +200,7 @@
 				"nitrogen"       = new/datum/tlv(-1.0, -1.0, -1.0, -1.0), // Partial pressure, kpa
 				"carbon dioxide" = new/datum/tlv(-1.0, -1.0, -1.0, -1.0), // Partial pressure, kpa
 				"plasma"         = new/datum/tlv(-1.0, -1.0, -1.0, -1.0), // Partial pressure, kpa
+				"nitrous oxide"  = new/datum/tlv(-1.0, -1.0, -1.0, -1.0), // Partial pressure, kpa
 				"other"          = new/datum/tlv(-1.0, -1.0, -1.0, -1.0), // Partial pressure, kpa
 				"pressure"       = new/datum/tlv(-1.0, -1.0, -1.0, -1.0), /* kpa */
 				"temperature"    = new/datum/tlv(-1.0, -1.0, -1.0, -1.0), // K
@@ -296,6 +300,9 @@
 	cur_tlv = TLV["plasma"]
 	var/plasma_dangerlevel = cur_tlv.get_danger_level(environment.toxins*GET_PP)
 
+	cur_tlv = TLV["nitrous oxide"]
+	var/sleeping_agent_dangerlevel = cur_tlv.get_danger_level(environment.sleeping_agent*GET_PP)
+
 	cur_tlv = TLV["other"]
 	var/other_dangerlevel = cur_tlv.get_danger_level(environment.total_trace_moles() * GET_PP)
 
@@ -309,6 +316,7 @@
 		nitrogen_dangerlevel,
 		co2_dangerlevel,
 		plasma_dangerlevel,
+		sleeping_agent_dangerlevel,
 		other_dangerlevel,
 		temperature_dangerlevel
 	)
@@ -345,7 +353,7 @@
 				var/energy_used = max(abs(heat_capacity * (gas.temperature - target_temperature) ), MAX_ENERGY_CHANGE)
 
 				//Use power.  Assuming that each power unit represents 1000 watts....
-				use_power(energy_used / 1000, ENVIRON)
+				use_power(energy_used / 1000, PW_CHANNEL_ENVIRONMENT)
 
 				//We need to cool ourselves.
 				if(heat_capacity)
@@ -407,7 +415,7 @@
 				S.scrub_Toxins = FALSE
 				S.scrub_N2O = FALSE
 				S.scrubbing = TRUE
-				S.widenet = TRUE
+				S.widenet = FALSE
 				S.update_icon(UPDATE_ICON_STATE)
 
 			for(var/obj/machinery/atmospherics/unary/vent_pump/P as anything in alarm_area.vents)
@@ -415,7 +423,7 @@
 					continue
 				P.on = TRUE
 				P.pressure_checks = TRUE
-				P.internal_pressure_bound = ONE_ATMOSPHERE
+				P.external_pressure_bound = ONE_ATMOSPHERE
 				P.update_icon(UPDATE_ICON_STATE)
 
 
@@ -585,7 +593,7 @@
 		return
 
 	var/datum/gas_mixture/environment = location.return_air()
-	var/known_total = environment.oxygen + environment.nitrogen + environment.carbon_dioxide + environment.toxins
+	var/known_total = environment.oxygen + environment.nitrogen + environment.carbon_dioxide + environment.toxins + environment.sleeping_agent
 	var/total = environment.total_moles()
 
 	var/datum/tlv/cur_tlv
@@ -611,6 +619,10 @@
 	var/plasma_dangerlevel = cur_tlv.get_danger_level(environment.toxins*GET_PP)
 	var/plasma_percent = total ? environment.toxins / total * 100 : 0
 
+	cur_tlv = TLV["nitrous oxide"]
+	var/sleeping_agent_dangerlevel = cur_tlv.get_danger_level(environment.sleeping_agent*GET_PP)
+	var/sleeping_agent_percent = total ? environment.sleeping_agent / total * 100 : 0
+
 	cur_tlv = TLV["other"]
 	var/other_moles = total - known_total
 	var/other_dangerlevel = cur_tlv.get_danger_level(other_moles*GET_PP)
@@ -630,6 +642,7 @@
 	percentages["nitrogen"] = nitrogen_percent
 	percentages["co2"] = co2_percent
 	percentages["plasma"] = plasma_percent
+	percentages["n2o"] = sleeping_agent_percent
 	percentages["other"] = other_percent
 	data["contents"] = percentages
 
@@ -640,6 +653,7 @@
 	danger["nitrogen"] = nitrogen_dangerlevel
 	danger["co2"] = co2_dangerlevel
 	danger["plasma"] = plasma_dangerlevel
+	danger["n2o"] = sleeping_agent_dangerlevel
 	danger["other"] = other_dangerlevel
 	danger["overall"] = max(pressure_dangerlevel,oxygen_dangerlevel,nitrogen_dangerlevel,co2_dangerlevel,plasma_dangerlevel,other_dangerlevel,temperature_dangerlevel)
 	data["danger"] = danger
@@ -740,6 +754,7 @@
 		"nitrogen"       = "N2",
 		"carbon dioxide" = "CO2",
 		"plasma"         = "Toxin",
+		"nitrous oxide"  = "N2O",
 		"other"          = "Other")
 	for(var/g in gas_names)
 		thresholds += list(list("name" = gas_names[g], "settings" = list()))
@@ -1092,12 +1107,11 @@
 	qdel(src)
 
 /obj/machinery/alarm/power_change()
-	if(powered(power_channel))
-		stat &= ~NOPOWER
-		set_light(1, LIGHTING_MINIMUM_POWER)
-	else
-		stat |= NOPOWER
+	..()
+	if(stat & NOPOWER)
 		set_light(0)
+	else
+		set_light(1, LIGHTING_MINIMUM_POWER)
 	update_icon(UPDATE_ICON_STATE | UPDATE_OVERLAYS)
 
 /obj/machinery/alarm/obj_break(damage_flag)
@@ -1112,6 +1126,13 @@
 			I.obj_integrity = I.max_integrity * 0.5
 		new /obj/item/stack/cable_coil(loc, 3)
 	qdel(src)
+
+/obj/machinery/alarm/AltClick(mob/user)
+	if(Adjacent(user) && allowed(user) && !wires.is_cut(WIRE_IDSCAN))
+		locked = !locked
+		to_chat(user, "<span class='notice'>You [locked ? "lock" : "unlock"] the Air Alarm interface.</span>")
+	else
+		to_chat(user, "<span class='warning'>Access denied.</span>")
 
 /obj/machinery/alarm/examine(mob/user)
 	. = ..()

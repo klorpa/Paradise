@@ -84,7 +84,7 @@ SUBSYSTEM_DEF(garbage)
 	var/list/dellog = list()
 
 	//sort by how long it's wasted hard deleting
-	sortTim(items, cmp=/proc/cmp_qdel_item_time, associative = TRUE)
+	sortTim(items, GLOBAL_PROC_REF(cmp_qdel_item_time), TRUE)
 	for(var/path in items)
 		var/datum/qdel_item/I = items[path]
 		dellog += "Path: [path]"
@@ -415,6 +415,9 @@ SUBSYSTEM_DEF(garbage)
 	log_gc("Finished searching clients")
 
 	log_gc("Completed search for references to a [type].")
+	#ifdef FIND_REF_NOTIFY_ON_COMPLETE
+	rustg_create_toast("ParadiseSS13", "GC search complete for [type]")
+	#endif
 	if(usr && usr.client)
 		usr.client.running_find_references = null
 	running_find_references = null

@@ -325,10 +325,10 @@
 /datum/spellbook_entry/summon/GetInfo()
 	var/dat =""
 	dat += "<b>[name]</b>"
-	if(cost>0)
-		dat += " Cost:[cost]<br>"
-	else
+	if(cost == 0)
 		dat += " No Cost<br>"
+	else
+		dat += " Cost:[cost]<br>"
 	dat += "<i>[desc]</i><br>"
 	if(active)
 		dat += "<b>Already cast!</b><br>"
@@ -365,7 +365,8 @@
 
 /datum/spellbook_entry/summon/guns
 	name = "Summon Guns"
-	desc = "Nothing could possibly go wrong with arming a crew of lunatics just itching for an excuse to kill you. There is a good chance that they will shoot each other first."
+	desc = "Nothing could possibly go wrong with arming a crew of lunatics just itching for an excuse to kill you. There is a good chance that they will shoot each other first. Hopefully. Gives you 2 extra spell points on purchase."
+	cost = -2
 	log_name = "SG"
 	is_ragin_restricted = TRUE
 
@@ -379,7 +380,8 @@
 
 /datum/spellbook_entry/summon/magic
 	name = "Summon Magic"
-	desc = "Share the wonders of magic with the crew and show them why they aren't to be trusted with it at the same time."
+	desc = "Share the wonders of magic with the crew and show them why they aren't to be trusted with it at the same time. Gives you 2 extra spell points on purchase."
+	cost = -2
 	log_name = "SU"
 	is_ragin_restricted = TRUE
 
@@ -471,6 +473,14 @@
 	log_name = "WC"
 	cost = 1
 	spawn_on_floor = TRUE // breaks if spawned in hand
+	category = "Artefacts"
+
+/datum/spellbook_entry/item/everfull_mug
+	name = "Everfull Mug"
+	desc = "A magical mug that can be filled with omnizine at will, though beware of addiction! It can also produce alchohol and other less useful substances."
+	item_path = /obj/item/reagent_containers/food/drinks/everfull
+	log_name = "EM"
+	cost = 1
 	category = "Artefacts"
 
 //Weapons and Armors
@@ -618,7 +628,7 @@
 
 /datum/spellbook_entry/item/revenantbottle
 	name = "Bottle of Ectoplasm"
-	desc = "A magically infused bottle of ectoplasm, effectivly pure salt from the spectral realm. Be careful though, these salty spirits are indiscriminate in their harvesting, and you yourself may become a victim."
+	desc = "A magically infused bottle of ectoplasm, effectively pure salt from the spectral realm. Be careful though, these salty spirits are indiscriminate in their harvesting, and you yourself may become a victim."
 	item_path = /obj/item/antag_spawner/revenant
 	log_name = "RB"
 	category = "Summons"
@@ -783,7 +793,7 @@
 			dat += "For spells: the number after the spell name is the cooldown time.<BR>"
 			dat += "You can reduce this number by spending more points on the spell.<BR>"
 		if("Defensive")
-			dat += "Spells geared towards improving your survivabilty or reducing foes ability to attack.<BR><BR>"
+			dat += "Spells geared towards improving your survivability or reducing foes ability to attack.<BR><BR>"
 			dat += "For spells: the number after the spell name is the cooldown time.<BR>"
 			dat += "You can reduce this number by spending more points on the spell.<BR>"
 		if("Mobility")
@@ -798,16 +808,16 @@
 			dat += "These powerful spells are capable of changing the very fabric of reality. Not always in your favour.<BR>"
 		if("Weapons and Armors")
 			dat += "Various weapons and armors to crush your enemies and protect you from harm.<BR><BR>"
-			dat += "Items are not bound to you and can be stolen. Additionaly they cannot typically be returned once purchased.<BR>"
+			dat += "Items are not bound to you and can be stolen. Additionally they cannot typically be returned once purchased.<BR>"
 		if("Staves")
 			dat += "Various staves granting you their power, which they slowly recharge over time.<BR><BR>"
-			dat += "Items are not bound to you and can be stolen. Additionaly they cannot typically be returned once purchased.<BR>"
+			dat += "Items are not bound to you and can be stolen. Additionally they cannot typically be returned once purchased.<BR>"
 		if("Artefacts")
 			dat += "Various magical artefacts to aid you.<BR><BR>"
-			dat += "Items are not bound to you and can be stolen. Additionaly they cannot typically be returned once purchased.<BR>"
+			dat += "Items are not bound to you and can be stolen. Additionally they cannot typically be returned once purchased.<BR>"
 		if("Summons")
 			dat += "Magical items geared towards bringing in outside forces to aid you.<BR><BR>"
-			dat += "Items are not bound to you and can be stolen. Additionaly they cannot typically be returned once purchased.<BR>"
+			dat += "Items are not bound to you and can be stolen. Additionally they cannot typically be returned once purchased.<BR>"
 		if("Standard")
 			dat += "These battle-tested spell sets are easy to use and provide good balance between offense and defense.<BR><BR>"
 			dat += "They all cost, and are worth, 10 spell points. You are able to refund any of the spells included as long as you stay in the wizard den.<BR>"

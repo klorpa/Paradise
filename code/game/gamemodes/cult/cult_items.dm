@@ -31,8 +31,9 @@
 		item_state = SSticker.cultdat.sword_icon
 	..()
 
-/obj/item/melee/cultblade/detailed_examine()
-	return "This blade is a powerful weapon, capable of severing limbs easily, if they are targeted. Nonbelievers are unable to use this weapon. Striking a nonbeliever after downing them with your cult magic, will stun them completely."
+/obj/item/melee/cultblade/examine(mob/user)
+	. = ..()
+	. += "<span class='notice'>This blade is a powerful weapon, capable of severing limbs easily. Nonbelievers are unable to use this weapon. Striking a nonbeliever after downing them with your cult magic will stun them completely.</span>"
 
 /obj/item/melee/cultblade/attack(mob/living/target, mob/living/carbon/human/user)
 	if(!iscultist(user))
@@ -74,7 +75,7 @@
 	knockdown_duration = 2 SECONDS
 
 /obj/item/restraints/legcuffs/bola/cult/throw_at(atom/target, range, speed, mob/thrower, spin, diagonals_first, datum/callback/callback)
-	if(!iscultist(thrower))
+	if(thrower && !iscultist(thrower)) // A couple of objs actually proc throw_at, so we need to make sure that yes, we got tossed by a person before trying to send a message
 		thrower.visible_message("<span class='danger'>The bola glows, and boomarangs back at [thrower]!</span>")
 		throw_impact(thrower)
 	. = ..()
@@ -582,7 +583,7 @@
 /obj/item/twohanded/cult_spear/Destroy()
 	if(spear_act)
 		qdel(spear_act)
-	..()
+	return ..()
 
 /obj/item/twohanded/cult_spear/update_icon_state()
 	icon_state = "bloodspear[wielded]"
@@ -794,7 +795,7 @@
 
 /obj/effect/portal/cult
 	name = "eldritch portal"
-	desc = "An evil portal made by dark magics. Suprisingly stable."
+	desc = "An evil portal made by dark magics. Surprisingly stable."
 	icon_state = "portal1"
 	failchance = 0
 	precision = FALSE

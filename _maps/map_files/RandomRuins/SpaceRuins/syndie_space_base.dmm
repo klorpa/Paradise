@@ -1632,8 +1632,8 @@
 /obj/structure/rack{
 	dir = 8
 	},
-/obj/item/reagent_containers/spray/cleaner,
-/obj/item/reagent_containers/spray/cleaner,
+/obj/item/reagent_containers/spray/cleaner/advanced,
+/obj/item/reagent_containers/spray/cleaner/advanced,
 /turf/simulated/floor/plasteel{
 	icon_state = "dark"
 	},
@@ -2376,7 +2376,7 @@
 /obj/structure/table/glass,
 /obj/item/reagent_containers/syringe/antiviral,
 /obj/item/reagent_containers/dropper,
-/obj/item/reagent_containers/spray/cleaner,
+/obj/item/reagent_containers/spray/cleaner/advanced,
 /obj/machinery/light{
 	dir = 4
 	},
@@ -3646,7 +3646,7 @@
 /obj/machinery/door/poddoor{
 	id_tag = "syndbaseventing";
 	name = "Venting Bay Door";
-	use_power = 0
+	power_state = 0
 	},
 /turf/simulated/floor/engine/vacuum,
 /area/ruin/unpowered/syndicate_space_base/engineering)
@@ -3990,6 +3990,7 @@
 	},
 /obj/machinery/door/firedoor,
 /obj/machinery/atmospherics/pipe/simple/hidden/scrubbers,
+/obj/machinery/door/airlock/hatch/syndicate,
 /turf/simulated/floor/plating,
 /area/ruin/unpowered/syndicate_space_base/engineering)
 "Qt" = (
@@ -4088,8 +4089,7 @@
 	},
 /area/ruin/unpowered/syndicate_space_base/dormitories)
 "RM" = (
-/obj/structure/grille,
-/obj/structure/window/full/plastitanium,
+/obj/effect/spawner/window/plastitanium,
 /turf/simulated/floor/plasteel{
 	icon_state = "white"
 	},
@@ -4138,7 +4138,7 @@
 /obj/machinery/light{
 	dir = 4
 	},
-/obj/item/reagent_containers/spray/cleaner,
+/obj/item/reagent_containers/spray/cleaner/advanced,
 /turf/simulated/floor/plasteel{
 	dir = 4;
 	icon_state = "whitepurple"
@@ -4229,6 +4229,7 @@
 /area/ruin/unpowered/syndicate_space_base/engineering)
 "Tg" = (
 /obj/machinery/door/firedoor,
+/obj/machinery/door/airlock/hatch/syndicate,
 /turf/simulated/floor/plating,
 /area/ruin/unpowered/syndicate_space_base/engineering)
 "Tl" = (
@@ -4242,6 +4243,7 @@
 /obj/machinery/atmospherics/pipe/simple/hidden/supply,
 /obj/machinery/door/firedoor,
 /obj/machinery/atmospherics/pipe/simple/hidden/scrubbers,
+/obj/machinery/door/airlock/hatch/syndicate,
 /turf/simulated/floor/plasteel{
 	icon_state = "dark"
 	},
@@ -4592,7 +4594,7 @@
 /obj/item/screwdriver/nuke{
 	pixel_y = 18
 	},
-/obj/item/reagent_containers/spray/cleaner,
+/obj/item/reagent_containers/spray/cleaner/advanced,
 /obj/structure/cable{
 	d1 = 1;
 	d2 = 2;
@@ -4630,6 +4632,7 @@
 	tag = ""
 	},
 /obj/machinery/door/firedoor,
+/obj/machinery/door/airlock/hatch/syndicate,
 /turf/simulated/floor/plasteel{
 	icon_state = "dark"
 	},

@@ -16,8 +16,9 @@
 	. = ..()
 	. += "It is currently [open ? "open" : "closed"]."
 
-/obj/machinery/atmospherics/binary/valve/detailed_examine()
-	return "Click this to turn the valve. If red, the pipes on each end are separated. Otherwise, they are connected."
+/obj/machinery/atmospherics/binary/valve/examine(mob/user)
+	. = ..()
+	. += "<span class='notice'>Click this to turn the valve. If red, the pipes on each end are separated. Otherwise, they are connected.</span>"
 
 /obj/machinery/atmospherics/binary/valve/open
 	open = TRUE
@@ -81,7 +82,7 @@
 	return attack_hand(user)
 
 /obj/machinery/atmospherics/binary/valve/digital/attack_hand(mob/user)
-	if(!powered())
+	if(!has_power())
 		return
 	if(!allowed(user) && !user.can_advanced_admin_interact())
 		to_chat(user, "<span class='alert'>Access denied.</span>")
@@ -93,13 +94,12 @@
 	icon_state = "map_valve1"
 
 /obj/machinery/atmospherics/binary/valve/digital/power_change()
-	var/old_stat = stat
-	..()
-	if(old_stat != stat)
-		update_icon(UPDATE_ICON_STATE)
+	if(!..())
+		return
+	update_icon(UPDATE_ICON_STATE)
 
 /obj/machinery/atmospherics/binary/valve/digital/update_icon_state()
-	if(!powered())
+	if(!has_power())
 		icon_state = "valve[open]nopower"
 		return
 	..()
