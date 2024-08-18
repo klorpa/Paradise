@@ -15,7 +15,7 @@
 	icon = 'icons/obj/bureaucracy.dmi'
 	icon_state = "pen"
 	item_state = "pen"
-	slot_flags = SLOT_BELT | SLOT_EARS
+	slot_flags = SLOT_FLAG_BELT | SLOT_FLAG_EARS
 	throwforce = 0
 	w_class = WEIGHT_CLASS_TINY
 	throw_speed = 3
@@ -25,7 +25,7 @@
 	pressure_resistance = 2
 
 /obj/item/pen/suicide_act(mob/user)
-	to_chat(viewers(user), "<span class='suicide'>[user] starts scribbling numbers over [user.p_themselves()] with [src]! It looks like [user.p_theyre()] trying to commit sudoku.</span>")
+	to_chat(viewers(user), "<span class='suicide'>[user] starts scribbling numbers over [user.p_themselves()] with [src]! It looks like [user.p_theyre()] trying to commit sudoku!</span>")
 	return BRUTELOSS
 
 /obj/item/pen/blue
@@ -62,14 +62,13 @@
 		"blue" = list(0.5, 0.5, 1),
 		"yellow" = list(1, 1, 0))
 	var/pen_colour_iconstate = "pencolor"
-	var/pen_colour_shift = 3
 
 /obj/item/pen/multi/Initialize(mapload)
-	..()
+	. = ..()
 	update_icon()
 
 /obj/item/pen/multi/proc/select_colour(mob/user as mob)
-	var/newcolour = input(user, "Which colour would you like to use?", name, colour) as null|anything in colour_choices
+	var/newcolour = tgui_input_list(user, "Which colour would you like to use?", name, colour_choices)
 	if(newcolour)
 		colour = newcolour
 		playsound(loc, 'sound/effects/pop.ogg', 50, 1)
@@ -83,26 +82,62 @@
 	var/icon/colour_overlay = new(icon, pen_colour_iconstate)
 	var/list/colours = colour_choices[colour]
 	colour_overlay.SetIntensity(colours[1], colours[2], colours[3])
-	if(pen_colour_shift)
-		colour_overlay.Shift(SOUTH, pen_colour_shift)
 	. += colour_overlay
 
 /obj/item/pen/fancy
 	name = "fancy pen"
-	desc = "A fancy metal pen. It uses blue ink. An inscription on one side reads,\"L.L. - L.R.\""
+	desc = "A fancy metal pen. An inscription on one side reads, \"L.L. - L.R.\""
 	icon_state = "fancypen"
 
 /obj/item/pen/multi/gold
-	name = "Gilded Pen"
+	name = "gilded pen"
 	desc = "A golden pen that is gilded with a meager amount of gold material. The word 'Nanotrasen' is etched on the clip of the pen."
 	icon_state = "goldpen"
-	pen_colour_shift = 0
 
 /obj/item/pen/multi/fountain
-	name = "Engraved Fountain Pen"
-	desc = "An expensive looking pen."
+	name = "engraved fountain pen"
+	desc = "An expensive-looking pen typically issued to Nanotrasen employees."
 	icon_state = "fountainpen"
-	pen_colour_shift = 0
+
+/obj/item/pen/multi/syndicate
+	name = "syndicate fountain pen"
+	desc = "A suspicious-looking pen issued to Syndicate staff."
+	icon_state = "pen_syndie"
+
+/obj/item/pen/cap
+	name = "captain's fountain pen"
+	desc = "An expensive pen only issued to station captains."
+	icon_state = "pen_cap"
+
+/obj/item/pen/hop
+	name = "head of personnel's fountain pen"
+	desc = "An expensive-looking pen only issued to heads of service."
+	icon_state = "pen_hop"
+
+/obj/item/pen/hos
+	name = "head of security's fountain pen"
+	desc = "An expensive-looking pen only issued to heads of security."
+	icon_state = "pen_hos"
+
+/obj/item/pen/cmo
+	name = "chief medical officer's fountain pen"
+	desc = "An expensive-looking pen only issued to heads of medical."
+	icon_state = "pen_cmo"
+
+/obj/item/pen/ce
+	name = "chief engineer's fountain pen"
+	desc = "An expensive-looking pen only issued to heads of engineering."
+	icon_state = "pen_ce"
+
+/obj/item/pen/rd
+	name = "research director's fountain pen"
+	desc = "An expensive-looking pen only issued to heads of research."
+	icon_state = "pen_rd"
+
+/obj/item/pen/qm
+	name = "quartermaster's fountain pen"
+	desc = "An expensive-looking pen only issued to heads of cargo."
+	icon_state = "pen_qm"
 
 /*
  * Sleepypens
@@ -110,6 +145,7 @@
 /obj/item/pen/sleepy
 	container_type = OPENCONTAINER
 	origin_tech = "engineering=4;syndicate=2"
+	var/transfer_amount = 50
 
 
 /obj/item/pen/sleepy/attack(mob/living/M, mob/user)
@@ -126,8 +162,9 @@
 		contained += "[round(reagent.volume, 0.01)]u [reagent]"
 
 	if(reagents.total_volume && M.reagents)
-		transfered = reagents.trans_to(M, 50)
-
+		var/fraction = min(transfer_amount / reagents.total_volume, 1)
+		reagents.reaction(M, REAGENT_INGEST, fraction)
+		transfered = reagents.trans_to(M, transfer_amount)
 	to_chat(user, "<span class='warning'>You sneakily stab [M] with the pen.</span>")
 	add_attack_logs(user, M, "Stabbed with (sleepy) [src]. [transfered]u of reagents transfered from pen containing [english_list(contained)].")
 	return TRUE
@@ -136,8 +173,33 @@
 /obj/item/pen/sleepy/Initialize(mapload)
 	. = ..()
 	create_reagents(100)
+	fill_pen()
+
+/obj/item/pen/sleepy/proc/fill_pen()
 	reagents.add_reagent("ketamine", 100)
 
+/obj/item/pen/sleepy/love
+	name = "fancy pen"
+	desc = "A fancy metal pen. An inscription on one side reads, \"L.L. - L.R.\""
+	icon_state = "fancypen"
+	container_type = DRAINABLE //cannot be refilled, love can be extracted for use in other items with syringe
+	origin_tech = "engineering=4;syndicate=2"
+	transfer_amount = 25 // 4 Dosages instead of 2
+
+/obj/item/pen/sleepy/love/attack(mob/living/M, mob/user)
+	var/can_transfer = reagents.total_volume && M.reagents
+	. = ..()
+	if(can_transfer && .)
+		M.apply_status_effect(STATUS_EFFECT_PACIFIED) //pacifies for 40 seconds
+	return TRUE
+
+/obj/item/pen/sleepy/love/fill_pen()
+	reagents.add_reagent("love", 100)
+
+/obj/item/pen/sleepy/undisguised
+	name = "sleepy pen"
+	desc = "Used to stealthily inject targets. Comes loaded with ketamine but can be refilled with other chemicals. This one isn't disguised."
+	icon_state = "pen_syndie"
 
 /*
  * (Alan) Edaggers

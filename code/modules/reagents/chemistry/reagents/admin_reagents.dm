@@ -1,11 +1,11 @@
-/datum/reagent/medicine/adminordrazine //An OP chemical for admins
+/// An OP chemical for admins
+/datum/reagent/medicine/adminordrazine
 	name = "Adminordrazine"
 	id = "adminordrazine"
 	description = "It's magic. We don't have to explain it."
 	reagent_state = LIQUID
 	color = "#C8A5DC" // rgb: 200, 165, 220
 	process_flags = ORGANIC | SYNTHETIC	//Adminbuse knows no bounds!
-	can_synth = FALSE
 	taste_description = "admin abuse"
 
 /datum/reagent/medicine/adminordrazine/on_mob_life(mob/living/carbon/M)
@@ -39,10 +39,10 @@
 	M.SetStunned(0)
 	M.SetImmobilized(0)
 	M.SetKnockDown(0)
+	M.adjustStaminaLoss(-60)
 	M.SetParalysis(0)
 	M.SetSilence(0)
 	M.SetHallucinate(0)
-	REMOVE_TRAITS_NOT_IN(M, list(ROUNDSTART_TRAIT, SPECIES_TRAIT))
 	M.SetDizzy(0)
 	M.SetDrowsy(0)
 	M.SetStuttering(0)
@@ -56,6 +56,12 @@
 			continue
 		D.cure(0)
 	..()
+	if(M.dna?.species)
+		// Set the temperature to the species's preferred temperature
+		// For things like drasks, for example
+		M.bodytemperature = M.dna.species.body_temperature
+	else
+		M.bodytemperature = BODYTEMP_NORMAL
 	return STATUS_UPDATE_ALL
 
 /datum/reagent/medicine/adminordrazine/nanites

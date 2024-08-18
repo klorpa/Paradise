@@ -22,8 +22,9 @@
 	if(!eyeobj || QDELETED(eyeobj) || !eyeobj.loc)
 		view_core()
 
-	if(machine)
-		machine.check_eye(src)
+	// Do holopad AI checks
+	if(istype(machine, /obj/machinery/hologram))
+		check_holopad_eye()
 
 	if(malfhack && malfhack.aidisabled)
 		to_chat(src, "<span class='danger'>ERROR: APC access disabled, hack attempt canceled.</span>")
@@ -45,6 +46,7 @@
 			aiRestorePowerRoutine = 0
 			update_sight()
 			to_chat(src, "Alert cancelled. Power has been restored[aiRestorePowerRoutine == 2 ? "without our assistance" : ""].")
+			apc_override = FALSE
 	else
 		if(lacks_power())
 			if(!aiRestorePowerRoutine)
@@ -121,9 +123,8 @@
 								to_chat(src, "Receiving control information from APC.")
 								sleep(2)
 								//bring up APC dialog
-								apc_override = 1
+								apc_override = TRUE
 								theAPC.attack_ai(src)
-								apc_override = 0
 								aiRestorePowerRoutine = 3
 						sleep(50)
 						theAPC = null
@@ -141,8 +142,15 @@
 /mob/living/silicon/ai/proc/lacks_power()
 	var/turf/T = get_turf(src)
 	var/area/A = get_area(src)
+	if(controlled_mech)
+		return controlled_mech.get_charge() <= 0
 	return (!A.powernet.equipment_powered && A.requires_power || isspaceturf(T)) && !isitem(loc)
 
 /mob/living/silicon/ai/rejuvenate()
 	..()
 	add_ai_verbs(src)
+
+#undef POWER_RESTORATION_OFF
+#undef POWER_RESTORATION_START
+#undef POWER_RESTORATION_SEARCH_APC
+#undef POWER_RESTORATION_APC_FOUND

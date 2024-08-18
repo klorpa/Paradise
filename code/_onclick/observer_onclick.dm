@@ -62,11 +62,31 @@
 /mob/dead/observer/ShiftClickOn(atom/A)
 	examinate(A)
 
-/atom/proc/attack_ghost(mob/user)
+/mob/dead/observer/AltClickOn(atom/A)
+	AltClickNoInteract(src, A)
+
+/mob/dead/observer/AltShiftClickOn(atom/A)
+	return
+
+/mob/dead/observer/CtrlShiftClickOn(atom/A)
+	return
+
+/mob/dead/observer/MiddleShiftClickOn(atom/A)
+	return
+
+/mob/dead/observer/MiddleShiftControlClickOn(atom/A)
+	return
+
+/atom/proc/attack_ghost(mob/dead/observer/user)
 	if(SEND_SIGNAL(src, COMSIG_ATOM_ATTACK_GHOST, user) & COMPONENT_CANCEL_ATTACK_CHAIN)
 		return TRUE
+	if(!istype(user)) // Make sure user is actually an observer. Revenents also use attack_ghost, but do not have the health_scan var.
+		return FALSE
+	if(user.client)
+		if(user.gas_scan && atmos_scan(user=user, target=src, silent=TRUE))
+			return TRUE
 
-// health + cyborg analyzer for ghosts
+// health + machine analyzer for ghosts
 /mob/living/attack_ghost(mob/dead/observer/user)
 	if(!istype(user)) // Make sure user is actually an observer. Revenents also use attack_ghost, but do not have the health_scan var.
 		return
@@ -79,7 +99,7 @@
 
 // ---------------------------------------
 // And here are some good things for free:
-// Now you can click through portals, wormholes, gateways, and teleporters while observing. -Sayu
+// Now you can click through portals, wormholes, and teleporters while observing. -Sayu
 
 /obj/machinery/teleport/hub/attack_ghost(mob/user as mob)
 	var/obj/machinery/teleport/station/S = power_station
@@ -87,19 +107,3 @@
 		var/obj/machinery/computer/teleporter/com = S.teleporter_console
 		if(com && com.target)
 			user.forceMove(get_turf(com.target))
-
-/obj/effect/portal/attack_ghost(mob/user as mob)
-	if(target)
-		user.forceMove(get_turf(target))
-
-/obj/machinery/gateway/centerstation/attack_ghost(mob/user as mob)
-	if(awaygate)
-		user.forceMove(awaygate.loc)
-	else
-		to_chat(user, "[src] has no destination.")
-
-/obj/machinery/gateway/centeraway/attack_ghost(mob/user as mob)
-	if(stationgate)
-		user.forceMove(stationgate.loc)
-	else
-		to_chat(user, "[src] has no destination.")

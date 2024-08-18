@@ -68,6 +68,8 @@
 	categories = list(
 		"Cyborg",
 		"Cyborg Repair",
+		"MODsuit Construction",
+		"MODsuit Modules",
 		"Ripley",
 		"Firefighter",
 		"Odysseus",
@@ -213,10 +215,15 @@
 		var/obj/item/I = A
 		I.materials = final_cost
 		if(D.locked)
-			var/obj/item/storage/lockbox/research/large/L = new(get_step(src, output_dir))
+			var/obj/item/storage/lockbox/research/modsuit/L = new(get_step(src, output_dir))
 			I.forceMove(L)
 			L.name += " ([I.name])"
 			L.origin_tech = I.origin_tech
+			L.req_access = D.access_requirement
+			var/list/lockbox_access
+			for(var/access in L.req_access)
+				lockbox_access += "[get_access_desc(access)] "
+				L.desc = "A locked box. It is locked to [lockbox_access]access."
 
 	// Clean up
 	being_built = null
@@ -290,10 +297,10 @@
 /obj/machinery/mecha_part_fabricator/attackby(obj/item/W, mob/user, params)
 	if(default_deconstruction_screwdriver(user, "fab-o", "fab-idle", W))
 		return
-	if(exchange_parts(user, W))
-		return
+
 	if(default_deconstruction_crowbar(user, W))
 		return TRUE
+
 	return ..()
 
 /obj/machinery/mecha_part_fabricator/attack_ghost(mob/user)
@@ -307,18 +314,23 @@
 		return
 	ui_interact(user)
 
-/obj/machinery/mecha_part_fabricator/ui_interact(mob/user, ui_key = "main", datum/tgui/ui = null, force_open = TRUE, datum/tgui/master_ui = null, datum/ui_state/state = GLOB.default_state)
+/obj/machinery/mecha_part_fabricator/ui_state(mob/user)
+	return GLOB.default_state
+
+/obj/machinery/mecha_part_fabricator/ui_interact(mob/user, datum/tgui/ui = null)
 	if(!selected_category)
 		selected_category = categories[1]
 
-	var/datum/asset/materials_assets = get_asset_datum(/datum/asset/simple/materials)
-	materials_assets.send(user)
-
-	ui = SStgui.try_update_ui(user, src, ui_key, ui, force_open)
+	ui = SStgui.try_update_ui(user, src, ui)
 	if(!ui)
-		ui = new(user, src, ui_key, "ExosuitFabricator", name, 800, 600)
+		ui = new(user, src, "ExosuitFabricator", name)
 		ui.open()
 		ui.set_autoupdate(FALSE)
+
+/obj/machinery/mecha_part_fabricator/ui_assets(mob/user)
+	return list(
+		get_asset_datum(/datum/asset/spritesheet/materials)
+	)
 
 /obj/machinery/mecha_part_fabricator/ui_data(mob/user)
 	var/list/data = list()
@@ -446,7 +458,7 @@
 			var/datum/material/M = materials.materials[id]
 			if(!M || !M.amount)
 				return
-			var/num_sheets = input(usr, "How many sheets do you want to withdraw?", "Withdrawing [M.name]") as num|null
+			var/num_sheets = tgui_input_number(usr, "How many sheets do you want to withdraw?", "Withdrawing [M.name]", max_value = round(M.amount / 2000))
 			if(isnull(num_sheets) || num_sheets <= 0)
 				return
 			materials.retrieve_sheets(num_sheets, id)

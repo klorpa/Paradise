@@ -3,23 +3,26 @@
 	icon_state = "mime"
 	item_color = "mime"
 
-/obj/item/clothing/shoes/combat //basic syndicate combat boots for nuke ops and mob corpses
+/// basic syndicate combat boots for nuke ops and mob corpses
+/obj/item/clothing/shoes/combat
 	name = "combat boots"
 	desc = "High speed, low drag combat boots."
 	w_class = WEIGHT_CLASS_NORMAL
 	can_cut_open = 1
 	icon_state = "jackboots"
 	item_state = "jackboots"
-	armor = list(MELEE = 15, BULLET = 15, LASER = 15, ENERGY = 15, BOMB = 50, BIO = 5, RAD = 0, FIRE = 115, ACID = 50)
+	armor = list(MELEE = 15, BULLET = 15, LASER = 15, ENERGY = 15, BOMB = 50, RAD = 0, FIRE = 115, ACID = 50)
 	strip_delay = 70
 	resistance_flags = NONE
+	knife_slot = TRUE
 
-/obj/item/clothing/shoes/combat/swat //overpowered gimmick boots
+/// overpowered gimmick boots
+/obj/item/clothing/shoes/combat/swat
 	name = "\improper SWAT shoes"
 	desc = "High speed, no drag combat boots."
 	permeability_coefficient = 0.01
-	armor = list(MELEE = 35, BULLET = 20, LASER = 15, ENERGY = 15, BOMB = 50, BIO = 20, RAD = 20, FIRE = 450, ACID = 50)
-	flags = NOSLIP
+	armor = list(MELEE = 35, BULLET = 20, LASER = 15, ENERGY = 15, BOMB = 50, RAD = 20, FIRE = 450, ACID = 50)
+	no_slip = TRUE
 
 /obj/item/clothing/shoes/sandal
 	name = "sandals"
@@ -45,17 +48,23 @@
 	desc = "A pair of yellow rubber boots, designed to prevent slipping on wet surfaces."
 	icon_state = "galoshes"
 	permeability_coefficient = 0.05
-	flags = NOSLIP
+	no_slip = TRUE
 	slowdown = SHOES_SLOWDOWN+1
 	strip_delay = 50
 	put_on_delay = 50
 	resistance_flags = NONE
-	armor = list(MELEE = 0, BULLET = 0, LASER = 0, ENERGY = 0, BOMB = 0, BIO = 0, RAD = 0, FIRE = 35, ACID = 150)
+	armor = list(MELEE = 0, BULLET = 0, LASER = 0, ENERGY = 0, BOMB = 0, RAD = 0, FIRE = 35, ACID = 150)
 
 /obj/item/clothing/shoes/galoshes/dry
 	name = "absorbent galoshes"
 	desc = "A pair of purple rubber boots, designed to prevent slipping on wet surfaces while also drying them."
 	icon_state = "galoshes_dry"
+
+/// / for red janitor ert.
+/obj/item/clothing/shoes/galoshes/dry/lightweight
+	name = "lightweight absorbent galoshes"
+	desc = "A pair of expensive looking lightweight rubber boots, designed to prevent slipping on wet surfaces while also drying them."
+	slowdown = NONE
 
 /obj/item/clothing/shoes/galoshes/dry/Initialize(mapload)
 	. = ..()
@@ -76,6 +85,10 @@
 	slowdown = SHOES_SLOWDOWN+1
 	item_color = "clown"
 	var/enabled_waddle = TRUE
+	// "Dyeable" in this case is a bit of an understatement, washing these
+	// with a crayon will give them the appearance and name of normal
+	// shoes, but the functionality of clown shoes.
+	dyeable = TRUE
 
 /obj/item/clothing/shoes/clown_shoes/Initialize(mapload)
 	. = ..()
@@ -83,7 +96,7 @@
 
 /obj/item/clothing/shoes/clown_shoes/equipped(mob/user, slot)
 	. = ..()
-	if(slot == slot_shoes && enabled_waddle)
+	if(slot == SLOT_HUD_SHOES && enabled_waddle)
 		user.AddElement(/datum/element/waddling)
 
 /obj/item/clothing/shoes/clown_shoes/dropped(mob/user)
@@ -107,44 +120,53 @@
 		enabled_waddle = FALSE
 
 /obj/item/clothing/shoes/clown_shoes/nodrop
+	dyeable = FALSE
 	flags = NODROP
 
 /obj/item/clothing/shoes/clown_shoes/magical
 	name = "magical clown shoes"
 	desc = "Standard-issue shoes of the wizarding class clown. Damn they're huge! And powerful! Somehow."
+	dyeable = FALSE
 	magical = TRUE
+
+/obj/item/clothing/shoes/clown_shoes/magical/nodrop
+	desc = "Standard-issue shoes of the wizarding class clown. Damn they're huge! And stuck to your feet!"
+	flags = NODROP
 
 /obj/item/clothing/shoes/clown_shoes/slippers
 	actions_types = list(/datum/action/item_action/slipping)
 	enabled_waddle = FALSE
 	slowdown = 0
+	dyeable = FALSE
 	var/slide_distance = 6
 	var/recharging_rate = 8 SECONDS
 	var/recharging_time = 0
 
 /obj/item/clothing/shoes/clown_shoes/slippers/item_action_slot_check(slot, mob/user)
-	if(slot == slot_shoes)
+	if(slot == SLOT_HUD_SHOES)
 		return TRUE
 
 /obj/item/clothing/shoes/clown_shoes/slippers/proc/slide_one(mob/living/user, progress, prev_dir , prev_flags)
 	user.dir = prev_dir
 	step(user, user.dir)
+	for(var/mob/living/carbon/crossed in user.loc)
+		crossed.slip(src, 16 SECONDS, 0, FALSE, TRUE, "trip")
 	if(progress == slide_distance)
 		user.stand_up()
 		user.pass_flags = prev_flags
 
 /obj/item/clothing/shoes/clown_shoes/slippers/ui_action_click(mob/living/user, action)
-    if(recharging_time > world.time)
-        to_chat(user, "<span class='warning'>The boot's internal propulsion needs to recharge still!</span>")
-        return
-    var/prev_dir = user.dir
-    var/old_pass = user.pass_flags
-    user.pass_flags |= (PASSMOB | PASSTABLE)
-    playsound(src, 'sound/items/bikehorn.ogg', 50, TRUE, 1)
-    recharging_time = world.time + recharging_rate
-    user.lay_down()
-    for(var/crossed in 1 to slide_distance)
-        addtimer(CALLBACK(src, PROC_REF(slide_one), user, crossed, prev_dir, old_pass), crossed)
+	if(recharging_time > world.time)
+		to_chat(user, "<span class='warning'>The boot's internal propulsion needs to recharge still!</span>")
+		return
+	var/prev_dir = user.dir
+	var/old_pass = user.pass_flags
+	user.pass_flags |= (PASSMOB | PASSTABLE)
+	playsound(src, 'sound/items/bikehorn.ogg', 50, TRUE, 1)
+	recharging_time = world.time + recharging_rate
+	user.lay_down()
+	for(var/crossed in 1 to slide_distance)
+		addtimer(CALLBACK(src, PROC_REF(slide_one), user, crossed, prev_dir, old_pass), crossed)
 
 
 /obj/item/clothing/shoes/clown_shoes/slippers/toggle_waddle(mob/living/user)
@@ -175,6 +197,14 @@
 	icon_state = "jacksandal"
 	item_color = "jacksandal"
 
+/obj/item/clothing/shoes/jackboots/noisy
+	name = "heavy jackboots"
+	desc = "Outdated heavier versions of the standard Nanotrasen-issue Security combat boots. Pick up that can."
+
+/obj/item/clothing/shoes/jackboots/noisy/Initialize(mapload)
+	. = ..()
+	AddComponent(/datum/component/squeak, list('sound/effects/jackboot1.ogg' = 1, 'sound/effects/jackboot2.ogg' = 1), 50, falloff_exponent = 20)
+
 /obj/item/clothing/shoes/workboots
 	name = "work boots"
 	desc = "Thick-soled boots for industrial work environments."
@@ -186,6 +216,11 @@
 	desc = "Steel-toed mining boots for mining in hazardous environments. Very good at keeping toes uncrushed."
 	icon_state = "explorer"
 	resistance_flags = FIRE_PROOF
+	cold_protection = FEET|LEGS
+	min_cold_protection_temperature = SHOES_MIN_TEMP_PROTECT
+	heat_protection = FEET|LEGS
+	max_heat_protection_temperature = SHOES_MAX_TEMP_PROTECT
+	knife_slot = TRUE
 
 /obj/item/clothing/shoes/winterboots
 	name = "winter boots"
@@ -304,6 +339,7 @@
 	icon_override = 'icons/goonstation/mob/clothing/feet.dmi'
 	lefthand_file = 'icons/goonstation/mob/inhands/clothing_lefthand.dmi'
 	righthand_file = 'icons/goonstation/mob/inhands/clothing_righthand.dmi'
+	dyeable = FALSE
 
 /obj/item/clothing/shoes/singery
 	name = "yellow performer's boots"
@@ -351,7 +387,7 @@
 	name = "lizard skin boots"
 	desc = "You can hear a faint hissing from inside the boots; you hope it is just a mournful ghost."
 	icon_state = "lizardboots_green"
-	armor = list(MELEE = 0, BULLET = 0, LASER = 0, ENERGY = 0, BOMB = 0, BIO = 0, RAD = 0, FIRE = 35, ACID = 0) //lizards like to stay warm
+	armor = list(MELEE = 0, BULLET = 0, LASER = 0, ENERGY = 0, BOMB = 0, RAD = 0, FIRE = 35, ACID = 0) //lizards like to stay warm
 
 /obj/item/clothing/shoes/cowboy/lizardmasterwork
 	name = "\improper Hugs-The-Feet lizard skin boots"
@@ -385,13 +421,14 @@
 	actions_types = list(/datum/action/item_action/bhop)
 	permeability_coefficient = 0.05
 	can_cut_open = FALSE
+	knife_slot = TRUE
 	var/jumpdistance = 5 //-1 from to see the actual distance, e.g 4 goes over 3 tiles
 	var/jumpspeed = 3
-	var/recharging_rate = 60 //default 6 seconds between each dash
+	var/recharging_rate = 6 SECONDS //default 6 seconds between each dash
 	var/recharging_time = 0 //time until next dash
 
 /obj/item/clothing/shoes/bhop/item_action_slot_check(slot)
-	if(slot == slot_shoes)
+	if(slot == SLOT_HUD_SHOES)
 		return TRUE
 
 /obj/item/clothing/shoes/bhop/ui_action_click(mob/user, action)
@@ -408,7 +445,7 @@
 		user.flying = TRUE
 		do_callback  = TRUE
 	if(user.throw_at(target, jumpdistance, jumpspeed, spin = FALSE, diagonals_first = TRUE, callback = do_callback ? VARSET_CALLBACK(user, flying, FALSE) : null))
-		playsound(src, 'sound/effects/stealthoff.ogg', 50, 1, 1)
+		playsound(src, 'sound/effects/stealthoff.ogg', 50, TRUE, 1)
 		user.visible_message("<span class='warning'>[usr] dashes forward into the air!</span>")
 		recharging_time = world.time + recharging_rate
 	else

@@ -1,13 +1,13 @@
 // Make this reflect amount grown, can't do that currently
-/obj/effect/proc_holder/spell/alien_spell/evolve_larva
+/datum/spell/alien_spell/evolve_larva
 	name = "Evolve."
 	desc = "Evolve into a fully grown Alien."
 	action_icon_state = "alien_evolve_larva"
 
-/obj/effect/proc_holder/spell/alien_spell/evolve_larva/create_new_targeting()
+/datum/spell/alien_spell/evolve_larva/create_new_targeting()
 	return new /datum/spell_targeting/self
 
-/obj/effect/proc_holder/spell/alien_spell/evolve_larva/cast(list/targets, mob/living/carbon/alien/larva/user)
+/datum/spell/alien_spell/evolve_larva/cast(list/targets, mob/living/carbon/alien/larva/user)
 	if(user.stat != CONSCIOUS)
 		return
 
@@ -25,7 +25,7 @@
 	to_chat(user, "<B>Sentinels</B> <span class='notice'>are tasked with protecting the hive and are deadly up close and at a range. They are not as physically imposing nor fast as the hunters.</span>")
 	to_chat(user, "<B>Drones</B> <span class='notice'>are the working class, offering the largest plasma storage and generation. They are the only caste which may evolve again, turning into the dreaded alien queen.</span>")
 	var/static/list/to_evolve = list("Hunter" = image(icon = 'icons/mob/alien.dmi', icon_state = "alienh_s"),
-								"Sentinel" = image(icon = 'icons/mob/alien.dmi', icon_state = "aliend_s"),
+								"Sentinel" = image(icon = 'icons/mob/alien.dmi', icon_state = "aliens_s"),
 								"Drone" = image(icon = 'icons/mob/alien.dmi', icon_state = "aliend_s"))
 	var/new_xeno = show_radial_menu(user, user, to_evolve, src, radius = 40)
 	var/turf/T = user.loc

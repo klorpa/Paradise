@@ -13,10 +13,10 @@
 /obj/item/projectile/ion/on_hit(atom/target, blocked = 0)
 	..()
 	empulse(target, strong_emp, weak_emp, TRUE, cause = "[type] fired by [key_name(firer)]")
-	return 1
+	return TRUE
 
 /obj/item/projectile/ion/weak
-	strong_emp = 0
+	strong_emp = -1
 	weak_emp = 0
 
 /obj/item/projectile/bullet/gyro
@@ -29,7 +29,7 @@
 /obj/item/projectile/bullet/gyro/on_hit(atom/target, blocked = 0)
 	..()
 	explosion(target, -1, 0, 2, cause = "[type] fired by [key_name(firer)]")
-	return 1
+	return TRUE
 
 /obj/item/projectile/bullet/a40mm
 	name ="40mm grenade"
@@ -42,7 +42,7 @@
 /obj/item/projectile/bullet/a40mm/on_hit(atom/target, blocked = 0)
 	..()
 	explosion(target, -1, 0, 2, 1, 0, flame_range = 3, cause = "[type] fired by [key_name(firer)]")
-	return 1
+	return TRUE
 
 /obj/item/projectile/temp
 	name = "temperature beam"
@@ -123,12 +123,31 @@
 			shake_camera(M, 3, 1)
 	qdel(src)
 
+/obj/item/projectile/missile
+	icon = 'icons/obj/grenade.dmi'
+	icon_state = "missile"
+	damage = 50
+	///If the missile will have a heavy, or light explosion.
+	var/heavy = TRUE
+
+/obj/item/projectile/missile/on_hit(atom/target, blocked, hit_zone)
+	..()
+	if(heavy)
+		explosion(target, 1, 2, 3, cause = "[type] fired by [key_name(firer)]")
+	else
+		explosion(target, -1, 0, 2, cause = "[type] fired by [key_name(firer)]")
+	return TRUE
+
+/obj/item/projectile/missile/light
+	damage = 15
+	heavy = FALSE
+
 /obj/item/projectile/energy/floramut
 	name = "alpha somatoray"
 	icon_state = "energy"
 	damage = 0
 	damage_type = TOX
-	nodamage = 1
+	nodamage = TRUE
 	impact_effect_type = /obj/effect/temp_visual/impact_effect/green_laser
 	flag = "energy"
 
@@ -137,7 +156,8 @@
 	icon_state = "energy2"
 	damage = 0
 	damage_type = TOX
-	nodamage = 1
+	nodamage = TRUE
+	impact_effect_type = /obj/effect/temp_visual/impact_effect/green_laser
 	flag = "energy"
 
 /obj/item/projectile/energy/mindflayer
@@ -176,8 +196,8 @@
 	color = "#FF6600"
 
 /obj/item/projectile/beam/wormhole/New(obj/item/ammo_casing/energy/wormhole/casing)
-	. = ..()
-	if(casing)
+	..()
+	if(istype(casing))
 		gun = casing.gun
 
 /obj/item/projectile/beam/wormhole/on_hit(atom/target)
@@ -200,6 +220,19 @@
 	explosion(target, -1, 0, 1)
 	return TRUE
 
+/obj/item/projectile/bullet/confetti
+	name = "confetti shot"
+	damage = 0
+	range = 3
+
+/obj/item/projectile/bullet/confetti/on_range()
+	confettisize(src, 7, 3)
+	..()
+
+/obj/item/projectile/bullet/confetti/on_hit(atom/target, blocked, hit_zone)
+	confettisize(src, 7, 3)
+	..()
+
 /obj/item/projectile/plasma
 	name = "plasma blast"
 	icon_state = "plasmacutter"
@@ -208,7 +241,20 @@
 	range = 3
 	dismemberment = 20
 	sharp = TRUE
-	impact_effect_type = /obj/effect/temp_visual/impact_effect/purple_laser
+	hitscan = TRUE
+	muzzle_type = /obj/effect/projectile/muzzle/plasma_cutter
+	tracer_type = /obj/effect/projectile/tracer/plasma_cutter
+	impact_type = /obj/effect/projectile/impact/plasma_cutter
+	impact_effect_type = null
+	hitscan_light_intensity = 3
+	hitscan_light_range = 0.75
+	hitscan_light_color_override = LIGHT_COLOR_CYAN
+	muzzle_flash_intensity = 6
+	muzzle_flash_range = 2
+	muzzle_flash_color_override = LIGHT_COLOR_CYAN
+	impact_light_intensity = 7
+	impact_light_range = 2.5
+	impact_light_color_override = LIGHT_COLOR_CYAN
 
 /obj/item/projectile/plasma/prehit(atom/target)
 	. = ..()
@@ -244,7 +290,7 @@
 	damage = 0
 	nodamage = 1
 	alwayslog = TRUE
-	var/obj/item/radio/beacon/teleport_target = null
+	var/obj/item/beacon/teleport_target
 
 /obj/item/projectile/energy/teleport/New(loc, tele_target)
 	..(loc)
@@ -253,12 +299,13 @@
 
 /obj/item/projectile/energy/teleport/on_hit(atom/target, blocked = 0)
 	var/turf/target_turf = get_turf(teleport_target)
-	if(isliving(target) && istype(target_turf))
-		if(target_turf.z == target.z || teleport_target.emagged)
+	if(isliving(target))
+		if(istype(target_turf) && (target_turf.z == target.z || teleport_target.emagged))
 			do_teleport(target, teleport_target, 0)//teleport what's in the tile to the beacon
 		else
 			do_teleport(target, target, 15) //Otherwise it just warps you off somewhere.
 	add_attack_logs(firer, target, "Shot with a [type] [teleport_target ? "(Destination: [teleport_target])" : ""]")
+	return ..()
 
 /obj/item/projectile/snowball
 	name = "snowball"

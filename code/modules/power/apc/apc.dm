@@ -1,31 +1,4 @@
-// main_status var
-#define APC_EXTERNAL_POWER_NOTCONNECTED 0
-#define APC_EXTERNAL_POWER_NOENERGY 1
-#define APC_EXTERNAL_POWER_GOOD 2
 
-//opened
-#define APC_CLOSED 0
-#define APC_OPENED 1
-#define APC_COVER_OFF 2
-
-#define APC_AUTOFLAG_ALL_OFF 0
-#define APC_AUTOFLAG_ENVIRO_ONLY 1
-#define APC_AUTOFLAG_EQUIPMENT_OFF 2
-#define APC_AUTOFLAG_ALL_ON 3
-
-//electronics_state
-#define APC_ELECTRONICS_NONE 0
-#define APC_ELECTRONICS_INSTALLED 1
-#define APC_ELECTRONICS_SECURED 2
-
-/// Power channel is off, anything connected to it is not powered, cannot be set manually by players
-#define CHANNEL_SETTING_OFF 0
-/// APC power channel Setting Off, if set while apc is "on" set apc to "off" otherwise set to "auto-off"
-#define CHANNEL_SETTING_AUTO_OFF 1
-/// APC power channel setting on,
-#define CHANNEL_SETTING_ON 2   //on
-// APC user setting,
-#define CHANNEL_SETTING_AUTO_ON  3 //auto
 
 // the Area Power Controller (APC), formerly Power Distribution Unit (PDU)
 // one per area, needs wire conection to power network through a terminal
@@ -79,7 +52,7 @@
 	/*** APC Status Vars ***/
 	/// The wire panel associated with this APC
 	var/datum/wires/apc/wires = null
-	/// Can the APC recieve/transmit power? Determined by the condition of the 2 Main Power Wires
+	/// Can the APC receive/transmit power? Determined by the condition of the 2 Main Power Wires
 	var/shorted = FALSE
 	/// Is the APC on and transmitting power to enabled breakers? Think of this var as the master breaker for the APC
 	var/operating = TRUE
@@ -95,18 +68,18 @@
 
 	/*** APC Settings Vars ***/
 	/// The current setting for the lighting channel
-	var/lighting_channel = CHANNEL_SETTING_AUTO_ON
+	var/lighting_channel = APC_CHANNEL_SETTING_AUTO_ON
 	/// The current setting for the equipment channel
-	var/equipment_channel = CHANNEL_SETTING_AUTO_ON
+	var/equipment_channel = APC_CHANNEL_SETTING_AUTO_ON
 	/// The current setting for the environment channel
-	var/environment_channel = CHANNEL_SETTING_AUTO_ON
+	var/environment_channel = APC_CHANNEL_SETTING_AUTO_ON
 	/// Is the APC cover locked? i.e cannot be opened?
 	var/coverlocked = TRUE
 	/// Is the APC User Interface locked (prevents interaction)? Will not prevent silicons or admin observers from interacting
 	var/locked = TRUE
 	/// If TRUE, the APC will automatically draw power from connect terminal, if FALSE it will not charge
 	var/chargemode = TRUE
-	/// Counter var, ticks up when the APC recieves power from terminal and resets to 0 when not charging, used for the `var/charging` var
+	/// Counter var, ticks up when the APC receives power from terminal and resets to 0 when not charging, used for the `var/charging` var
 	var/chargecount = 0
 	var/report_power_alarm = TRUE
 
@@ -124,6 +97,12 @@
 	/// settings variable for having the APC auto use certain power channel settings
 	var/autoflag = APC_AUTOFLAG_ALL_OFF		// 0 = off, 1= eqp and lights off, 2 = eqp off, 3 = all on.
 
+	/// Being hijacked by a pulse demon?
+	var/being_hijacked = FALSE
+
+	/// Are we immune to EMPS?
+	var/emp_proof = FALSE
+
 	/*** APC Malf AI Vars ****/
 	var/malfhack = FALSE //New var for my changes to AI malf. --NeoFite
 	var/mob/living/silicon/ai/malfai = null //See above --NeoFite
@@ -131,6 +110,9 @@
 	/// Was this APC built instead of already existing? Used for malfhack to keep borgs from building apcs in space
 	var/constructed = FALSE
 	var/overload = 1 //used for the Blackout malf module
+
+	/// Are we hacked by a ruins malf AI? If so, it will act like a malf AI hacked APC, but silicons and malf AI's will not be able to interface with it.
+	var/hacked_by_ruin_AI = FALSE
 
 	/*** APC Overlay Vars ***/
 	var/update_state = -1
@@ -146,7 +128,7 @@
 
 /obj/machinery/power/apc/New(turf/loc, direction, building = 0)
 	if(!armor)
-		armor = list(MELEE = 20, BULLET = 20, LASER = 10, ENERGY = 100, BOMB = 30, BIO = 100, RAD = 100, FIRE = 90, ACID = 50)
+		armor = list(MELEE = 20, BULLET = 20, LASER = 10, ENERGY = 100, BOMB = 30, RAD = 100, FIRE = 90, ACID = 50)
 	..()
 	GLOB.apcs += src
 	GLOB.apcs = sortAtom(GLOB.apcs)
@@ -190,17 +172,21 @@
 
 /obj/machinery/power/apc/Initialize(mapload)
 	. = ..()
+
+	var/area/A = get_area(src)
+
+	if(A.powernet && !A.powernet.powernet_apc)
+		A.powernet.powernet_apc = src
+
 	if(!mapload)
 		return
+
 	electronics_state = APC_ELECTRONICS_SECURED
 	// is starting with a power cell installed, create it and set its charge level
 	if(cell_type)
 		cell = new /obj/item/stock_parts/cell/upgraded(src)
 		cell.maxcharge = cell_type	// cell_type is maximum charge (old default was 1000 or 2500 (values one and two respectively)
 		cell.charge = start_charge * cell.maxcharge / 100 		// (convert percentage to actual value)
-
-	var/area/A = get_area(src)
-
 
 	//if area isn't specified use current
 	if(keep_preset_name)
@@ -269,6 +255,15 @@
 				return
 			W.forceMove(src)
 			cell = W
+
+			for(var/mob/living/simple_animal/demon/pulse_demon/demon in cell)
+				demon.forceMove(src)
+				demon.current_power = src
+				if(!being_hijacked) // first come first serve
+					demon.try_hijack_apc(src)
+			if(being_hijacked)
+				cell.rigged = FALSE // don't blow the demon up
+
 			user.visible_message(\
 				"[user.name] has inserted the power cell to [name]!",\
 				"<span class='notice'>You insert the power cell.</span>")
@@ -334,7 +329,7 @@
 
 	else if(istype(W, /obj/item/mounted/frame/apc_frame) && opened)
 		if(!(stat & BROKEN || opened == APC_COVER_OFF || obj_integrity < max_integrity)) // There is nothing to repair
-			to_chat(user, "<span class='warning'>You found no reason for repairing this APC</span>")
+			to_chat(user, "<span class='warning'>You found no reason for repairing this APC.</span>")
 			return
 		if(!(stat & BROKEN) && opened == APC_COVER_OFF) // Cover is the only thing broken, we do not need to remove elctronicks to replace cover
 			user.visible_message("[user.name] replaces missing APC's cover.",\
@@ -410,10 +405,13 @@
 
 	return ui_interact(user)
 
-/obj/machinery/power/apc/ui_interact(mob/user, ui_key = "main", datum/tgui/ui = null, force_open = FALSE, datum/tgui/master_ui = null, datum/ui_state/state = GLOB.default_state)
-	ui = SStgui.try_update_ui(user, src, ui_key, ui, force_open)
+/obj/machinery/power/apc/ui_state(mob/user)
+	return GLOB.default_state
+
+/obj/machinery/power/apc/ui_interact(mob/user, datum/tgui/ui = null)
+	ui = SStgui.try_update_ui(user, src, ui)
 	if(!ui)
-		ui = new(user, src, ui_key, "APC", name, 510, 460, master_ui, state)
+		ui = new(user, src, "APC", name)
 		ui.open()
 
 /obj/machinery/power/apc/ui_data(mob/user)
@@ -471,9 +469,9 @@
 
 /obj/machinery/power/apc/proc/update()
 	if(operating && !shorted)
-		machine_powernet.set_power_channel(PW_CHANNEL_LIGHTING, (lighting_channel > CHANNEL_SETTING_AUTO_OFF))
-		machine_powernet.set_power_channel(PW_CHANNEL_EQUIPMENT, (equipment_channel > CHANNEL_SETTING_AUTO_OFF))
-		machine_powernet.set_power_channel(PW_CHANNEL_ENVIRONMENT, (environment_channel > CHANNEL_SETTING_AUTO_OFF))
+		machine_powernet.set_power_channel(PW_CHANNEL_LIGHTING, (lighting_channel > APC_CHANNEL_SETTING_AUTO_OFF))
+		machine_powernet.set_power_channel(PW_CHANNEL_EQUIPMENT, (equipment_channel > APC_CHANNEL_SETTING_AUTO_OFF))
+		machine_powernet.set_power_channel(PW_CHANNEL_ENVIRONMENT, (environment_channel > APC_CHANNEL_SETTING_AUTO_OFF))
 		if(lighting_channel)
 			emergency_power = TRUE
 			if(emergency_power_timer)
@@ -493,12 +491,14 @@
 		return TRUE
 
 	autoflag = 5 //why the hell is this being set to 5, fucking malf code -sirryan
-	if(issilicon(user))
-		var/mob/living/silicon/ai/AI = user
-		var/mob/living/silicon/robot/robot = user
-		if(aidisabled || (malfhack && istype(malfai) && ((istype(AI) && (malfai != AI && malfai != AI.parent))) || (istype(robot) && malfai && !(robot in malfai.connected_robots))))
+	if(issilicon(user) || ispulsedemon(user))
+		if(hacked_by_ruin_AI)
+			to_chat(user, "<span class='danger'>The APC interface program has been completely corrupted, you are unable to interface with it!</span>")
+			return FALSE
+		var/mob/living/L = user
+		if(!L.can_remote_apc_interface(src))
 			if(!loud)
-				to_chat(user, "<span class='danger'>\The [src] has AI control disabled!</span>")
+				to_chat(user, "<span class='danger'>[src] has AI control disabled!</span>")
 			return FALSE
 	else
 		if((!in_range(src, user) || !isturf(loc)))
@@ -508,7 +508,7 @@
 	if(istype(H))
 		if(H.getBrainLoss() >= 60)
 			for(var/mob/M in viewers(src, null))
-				to_chat(M, "<span class='danger'>[H] stares cluelessly at [src] and drools.</span>")
+				to_chat(M, "<span class='danger'>[H] stares cluelessly at [src].</span>")
 			return FALSE
 		else if(prob(H.getBrainLoss()))
 			to_chat(user, "<span class='danger'>You momentarily forget how to use [src].</span>")
@@ -518,7 +518,7 @@
 /obj/machinery/power/apc/proc/is_authenticated(mob/user as mob)
 	if(user.can_admin_interact())
 		return TRUE
-	if(isAI(user) || isrobot(user))
+	if(isAI(user) || isrobot(user) || user.has_unlimited_silicon_privilege)
 		return TRUE
 	else
 		return !locked
@@ -526,14 +526,14 @@
 /obj/machinery/power/apc/proc/is_locked(mob/user as mob)
 	if(user.can_admin_interact())
 		return FALSE
-	if(isAI(user) || isrobot(user))
+	if(isAI(user) || isrobot(user) || user.has_unlimited_silicon_privilege)
 		return FALSE
 	else
 		return locked
 
 /obj/machinery/power/apc/ui_act(action, params, datum/tgui/ui)
 	var/mob/user = ui.user
-	if(..() || !can_use(user, TRUE) || (locked && !user.has_unlimited_silicon_privilege && (action != "toggle_nightshift") && !user.can_admin_interact()))
+	if(..() || !can_use(user, TRUE) || (is_locked(user) && (action != "toggle_nightshift")))
 		return
 	. = TRUE
 	switch(action)
@@ -612,9 +612,9 @@
 	var/last_charging_state = charging
 	update_last_used() // get local powernet usage and clear it for next cycle
 
-	var/excess = surplus()
-	//Now we calculate the state of the external powernet
-	if(!avail())
+	var/excess = get_power_balance()
+
+	if(!get_available_power())
 		main_status = APC_EXTERNAL_POWER_NOTCONNECTED
 	else if(excess < 0)
 		main_status = APC_EXTERNAL_POWER_NOENERGY  // there's more demand than supply on powernet, there's not enough power
@@ -628,19 +628,19 @@
 
 		if(excess > last_used_total)	// if power excess recharge the cell  by the same amount just used
 			cell.give(cell_used)
-			add_load(cell_used / GLOB.CELLRATE)		// add the load used to recharge the cell
+			consume_direct_power(cell_used / GLOB.CELLRATE)		// add the load used to recharge the cell
 		else // no excess, and not enough per-apc
 			if((cell.charge / GLOB.CELLRATE + excess) >= last_used_total)		// can we draw enough from cell+grid to cover last usage?
 				cell.charge = min(cell.maxcharge, cell.charge + GLOB.CELLRATE * excess)	//recharge with what we can
-				add_load(excess) // so draw what we can from the grid
+				consume_direct_power(excess) // so draw what we can from the grid
 				charging = APC_NOT_CHARGING
 			else	// not enough power available to run the last tick!
 				charging = APC_NOT_CHARGING
 				chargecount = 0
 				// This turns everything off in the case that there is still a charge left on the battery, just not enough to run the room.
-				equipment_channel = autoset(equipment_channel, CHANNEL_SETTING_OFF)
-				lighting_channel = autoset(lighting_channel, CHANNEL_SETTING_OFF)
-				environment_channel = autoset(environment_channel, CHANNEL_SETTING_OFF)
+				equipment_channel = autoset(equipment_channel, APC_CHANNEL_SETTING_OFF)
+				lighting_channel = autoset(lighting_channel, APC_CHANNEL_SETTING_OFF)
+				environment_channel = autoset(environment_channel, APC_CHANNEL_SETTING_OFF)
 				autoflag = APC_AUTOFLAG_ALL_OFF
 
 		// Set channels depending on how much charge we have left
@@ -658,7 +658,7 @@
 			if(excess > 0)		// check to make sure we have enough to charge
 				// Max charge is capped to % per second constant
 				var/ch = min(excess*GLOB.CELLRATE, cell.maxcharge*GLOB.CHARGELEVEL)
-				add_load(ch/GLOB.CELLRATE) // Removes the power we're taking from the grid
+				consume_direct_power(ch / GLOB.CELLRATE) // Removes the power we're taking from the grid
 				cell.give(ch) // actually recharge the cell
 
 			else
@@ -692,9 +692,9 @@
 	else // no cell, switch everything off
 		charging = APC_NOT_CHARGING
 		chargecount = 0
-		equipment_channel = autoset(equipment_channel, CHANNEL_SETTING_OFF)
-		lighting_channel = autoset(lighting_channel, CHANNEL_SETTING_OFF)
-		environment_channel = autoset(environment_channel, CHANNEL_SETTING_OFF)
+		equipment_channel = autoset(equipment_channel, APC_CHANNEL_SETTING_OFF)
+		lighting_channel = autoset(lighting_channel, APC_CHANNEL_SETTING_OFF)
+		environment_channel = autoset(environment_channel, APC_CHANNEL_SETTING_OFF)
 		if(report_power_alarm)
 			apc_area.poweralert(FALSE, src)
 		autoflag = APC_AUTOFLAG_ALL_OFF
@@ -713,34 +713,34 @@
 	// Put most likely at the top so we don't check it last, effeciency 101 <--- old coders can't spell
 	if(cell.charge >= 1250 || longtermpower > 0)
 		if(autoflag != APC_AUTOFLAG_ALL_ON)
-			equipment_channel = autoset(equipment_channel, CHANNEL_SETTING_AUTO_OFF)
-			lighting_channel = autoset(lighting_channel, CHANNEL_SETTING_AUTO_OFF)
-			environment_channel = autoset(environment_channel, CHANNEL_SETTING_AUTO_OFF)
+			equipment_channel = autoset(equipment_channel, APC_CHANNEL_SETTING_AUTO_OFF)
+			lighting_channel = autoset(lighting_channel, APC_CHANNEL_SETTING_AUTO_OFF)
+			environment_channel = autoset(environment_channel, APC_CHANNEL_SETTING_AUTO_OFF)
 			autoflag = APC_AUTOFLAG_ALL_ON
 			if(report_power_alarm)
 				apc_area.poweralert(TRUE, src)
 		return
 	if(cell.charge < 1250 && cell.charge > 750 && longtermpower < 0) // <30%, turn off equipment
 		if(autoflag != APC_AUTOFLAG_EQUIPMENT_OFF)
-			equipment_channel = autoset(equipment_channel, CHANNEL_SETTING_ON)
-			lighting_channel = autoset(lighting_channel, CHANNEL_SETTING_AUTO_OFF)
-			environment_channel = autoset(environment_channel, CHANNEL_SETTING_AUTO_OFF)
+			equipment_channel = autoset(equipment_channel, APC_CHANNEL_SETTING_ON)
+			lighting_channel = autoset(lighting_channel, APC_CHANNEL_SETTING_AUTO_OFF)
+			environment_channel = autoset(environment_channel, APC_CHANNEL_SETTING_AUTO_OFF)
 			if(report_power_alarm)
 				apc_area.poweralert(FALSE, src)
 			autoflag = APC_AUTOFLAG_EQUIPMENT_OFF
 	else if(cell.charge < 750 && cell.charge > 10)        // <15%, turn off lighting & equipment
 		if(autoflag > APC_AUTOFLAG_ENVIRO_ONLY)
-			equipment_channel = autoset(equipment_channel, CHANNEL_SETTING_ON)
-			lighting_channel = autoset(lighting_channel, CHANNEL_SETTING_ON)
-			environment_channel = autoset(environment_channel, CHANNEL_SETTING_AUTO_OFF)
+			equipment_channel = autoset(equipment_channel, APC_CHANNEL_SETTING_ON)
+			lighting_channel = autoset(lighting_channel, APC_CHANNEL_SETTING_ON)
+			environment_channel = autoset(environment_channel, APC_CHANNEL_SETTING_AUTO_OFF)
 			if(report_power_alarm)
 				apc_area.poweralert(FALSE, src)
 			autoflag = APC_AUTOFLAG_ENVIRO_ONLY
 	else if(cell.charge <= 0)                                   // zero charge, turn all off
 		if(autoflag != APC_AUTOFLAG_ALL_OFF)
-			equipment_channel = autoset(equipment_channel, CHANNEL_SETTING_OFF)
-			lighting_channel = autoset(lighting_channel, CHANNEL_SETTING_OFF)
-			environment_channel = autoset(environment_channel, CHANNEL_SETTING_OFF)
+			equipment_channel = autoset(equipment_channel, APC_CHANNEL_SETTING_OFF)
+			lighting_channel = autoset(lighting_channel, APC_CHANNEL_SETTING_OFF)
+			environment_channel = autoset(environment_channel, APC_CHANNEL_SETTING_OFF)
 			if(report_power_alarm)
 				apc_area.poweralert(FALSE, src)
 			autoflag = APC_AUTOFLAG_ALL_OFF
@@ -777,21 +777,24 @@
 /obj/machinery/power/apc/connect_to_network()
 	terminal?.connect_to_network() //The terminal is what the power computer looks for
 
-/obj/machinery/power/apc/surplus()
+/obj/machinery/power/apc/get_surplus()
 	if(terminal)
-		return terminal.surplus()
+		return terminal.get_surplus()
 	else
-		return 0 //not FALSE
+		return 0
 
-/obj/machinery/power/apc/add_load(amount)
+/obj/machinery/power/apc/get_power_balance()
+	if(terminal)
+		return terminal.get_power_balance()
+	else
+		return 0
+
+/obj/machinery/power/apc/consume_direct_power(amount)
 	if(terminal?.powernet)
-		terminal.add_load(amount)
+		terminal.consume_direct_power(amount)
 
-/obj/machinery/power/apc/avail()
-	if(terminal)
-		return terminal.avail()
-	else
-		return 0 //not FALSE
+/obj/machinery/power/apc/get_available_power()
+	return terminal ? terminal.get_available_power() : 0
 
 /obj/machinery/power/apc/proc/power_destroy() // Caused only by explosions and teslas, not for deconstruction
 	if(obj_integrity > integrity_failure || opened != APC_COVER_OFF)
@@ -848,27 +851,27 @@
 */
 /obj/machinery/power/apc/proc/autoset(current_setting, new_setting)
 	switch(new_setting)
-		if(CHANNEL_SETTING_OFF)
-			if(current_setting == CHANNEL_SETTING_ON)	// if on, return off
-				return CHANNEL_SETTING_OFF
-			if(current_setting == CHANNEL_SETTING_AUTO_ON)	// if auto-on, return auto-off
-				return CHANNEL_SETTING_AUTO_OFF
-		if(CHANNEL_SETTING_AUTO_OFF)
-			if(current_setting == CHANNEL_SETTING_AUTO_OFF)	// if auto-off, return auto-on
-				return CHANNEL_SETTING_AUTO_ON
-		if(CHANNEL_SETTING_ON)
-			if(current_setting == CHANNEL_SETTING_AUTO_ON)	// if auto-on, return auto-off
-				return CHANNEL_SETTING_AUTO_OFF
+		if(APC_CHANNEL_SETTING_OFF)
+			if(current_setting == APC_CHANNEL_SETTING_ON)	// if on, return off
+				return APC_CHANNEL_SETTING_OFF
+			if(current_setting == APC_CHANNEL_SETTING_AUTO_ON)	// if auto-on, return auto-off
+				return APC_CHANNEL_SETTING_AUTO_OFF
+		if(APC_CHANNEL_SETTING_AUTO_OFF)
+			if(current_setting == APC_CHANNEL_SETTING_AUTO_OFF)	// if auto-off, return auto-on
+				return APC_CHANNEL_SETTING_AUTO_ON
+		if(APC_CHANNEL_SETTING_ON)
+			if(current_setting == APC_CHANNEL_SETTING_AUTO_ON)	// if auto-on, return auto-off
+				return APC_CHANNEL_SETTING_AUTO_OFF
 	return current_setting //if setting is not changed, just keep current setting
 
 /obj/machinery/power/apc/proc/setsubsystem(new_setting)
 	if(cell?.charge > 1) //if there's a charge
-		if(new_setting == CHANNEL_SETTING_AUTO_OFF)  //and apc now set to off, return off
-			return CHANNEL_SETTING_OFF
+		if(new_setting == APC_CHANNEL_SETTING_AUTO_OFF)  //and apc now set to off, return off
+			return APC_CHANNEL_SETTING_OFF
 		return new_setting //else return the new setting
-	if(new_setting == CHANNEL_SETTING_AUTO_ON) //if no charge and set to auto, set to auto off
-		return CHANNEL_SETTING_AUTO_OFF
-	return CHANNEL_SETTING_OFF //if set to on and no charge, set to off
+	if(new_setting == APC_CHANNEL_SETTING_AUTO_ON) //if no charge and set to auto, set to auto off
+		return APC_CHANNEL_SETTING_AUTO_OFF
+	return APC_CHANNEL_SETTING_OFF //if set to on and no charge, set to off
 
 ///    ************* ---
 /// APC Helper Procs --- Antag Abilities/Fun Stuff
@@ -908,7 +911,6 @@
 		if(L.nightshift_allowed)
 			L.nightshift_enabled = nightshift_lights
 			L.update(FALSE, play_sound = FALSE)
-		CHECK_TICK
 
 /obj/machinery/power/apc/proc/relock_callback()
 	locked = TRUE
@@ -952,6 +954,8 @@
 ///    *************
 
 /obj/machinery/power/apc/emp_act(severity)
+	if(emp_proof)
+		return
 	if(cell)
 		cell.emp_act(severity)
 	if(occupier)
@@ -1008,6 +1012,20 @@
 			locked = FALSE
 			to_chat(user, "You emag the APC interface.")
 			update_icon()
+			return TRUE
+
+/obj/machinery/power/apc/proc/apc_short()
+	// if it has internal wires, cut the power wires
+	if(wires)
+		if(!wires.is_cut(WIRE_MAIN_POWER1))
+			wires.cut(WIRE_MAIN_POWER1)
+		if(!wires.is_cut(WIRE_MAIN_POWER2))
+			wires.cut(WIRE_MAIN_POWER2)
+	// if it was operating, toggle off the breaker
+	if(operating)
+		toggle_breaker()
+	// no matter what, ensure the area knows something happened to the power
+	apc_area.powernet.power_change()
 
 ///    *************
 /// APC subtypes
@@ -1031,11 +1049,14 @@
 /obj/machinery/power/apc/off_station/empty_charge
 	start_charge = 0
 
-/obj/machinery/power/apc/syndicate //general syndicate access
+/// general syndicate access
+/obj/machinery/power/apc/syndicate
+	name = "Main branch, do not use"
 	req_access = list(ACCESS_SYNDICATE)
 	report_power_alarm = FALSE
 
 /obj/machinery/power/apc/syndicate/off
+	name = "APC off"
 	environment_channel = 0
 	equipment_channel = 0
 	lighting_channel = 0
@@ -1044,6 +1065,22 @@
 /obj/machinery/power/apc/syndicate/off/Initialize(mapload)
 	. = ..()
 	cell.charge = 0
+
+/obj/machinery/power/apc/important
+	cell_type = 10000
+
+/obj/machinery/power/apc/critical
+	cell_type = 25000
+
+MAPPING_DIRECTIONAL_HELPERS(/obj/machinery/power/apc, 24, 24)
+MAPPING_DIRECTIONAL_HELPERS(/obj/machinery/power/apc/syndicate, 24, 24)
+MAPPING_DIRECTIONAL_HELPERS(/obj/machinery/power/apc/syndicate/off, 24, 24)
+MAPPING_DIRECTIONAL_HELPERS(/obj/machinery/power/apc/important, 24, 24)
+MAPPING_DIRECTIONAL_HELPERS(/obj/machinery/power/apc/critical, 24, 24)
+MAPPING_DIRECTIONAL_HELPERS(/obj/machinery/power/apc/off_station, 24, 24)
+MAPPING_DIRECTIONAL_HELPERS(/obj/machinery/power/apc/off_station/empty_charge, 24, 24)
+MAPPING_DIRECTIONAL_HELPERS(/obj/machinery/power/apc/worn_out, 24, 24)
+
 
 /obj/item/apc_electronics
 	name = "APC electronics"
@@ -1056,8 +1093,3 @@
 	flags = CONDUCT
 	usesound = 'sound/items/deconstruct.ogg'
 	toolspeed = 1
-
-
-#undef APC_EXTERNAL_POWER_NOTCONNECTED
-#undef APC_EXTERNAL_POWER_NOENERGY
-#undef APC_EXTERNAL_POWER_GOOD

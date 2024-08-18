@@ -27,7 +27,6 @@
 					amount *= dna.species.brain_mod
 			sponge.damage = clamp(sponge.damage + amount, 0, 120)
 			if(sponge.damage >= 120)
-				visible_message("<span class='alert'><B>[src]</B> goes limp, [p_their()] facial expression utterly blank.</span>")
 				death()
 	if(updating)
 		update_stat("adjustBrainLoss")
@@ -45,7 +44,6 @@
 					amount *= dna.species.brain_mod
 			sponge.damage = clamp(amount, 0, 120)
 			if(sponge.damage >= 120)
-				visible_message("<span class='alert'><B>[src]</B> goes limp, [p_their()] facial expression utterly blank.</span>")
 				death()
 	if(updating)
 		update_stat("setBrainLoss")
@@ -60,7 +58,7 @@
 		if(sponge)
 			return min(sponge.damage,maxHealth*2)
 		else
-			if(ischangeling(src))
+			if(IS_CHANGELING(src) || HAS_TRAIT(src, TRAIT_I_WANT_BRAINS))
 				// if a changeling has no brain, they have no brain damage.
 				return 0
 
@@ -112,7 +110,7 @@
 		var/obj/item/organ/external/O = get_organ(organ_name)
 
 		if(amount > 0)
-			O.receive_damage(amount, 0, sharp=is_sharp(damage_source), used_weapon=damage_source, forbidden_limbs = list(), ignore_resists=FALSE, updating_health=updating_health)
+			O.receive_damage(amount, 0, sharp = (damage_source ? damage_source.sharp : null), used_weapon = damage_source, forbidden_limbs = list(), ignore_resists = FALSE, updating_health = updating_health)
 		else
 			//if you don't want to heal robot organs, they you will have to check that yourself before using this proc.
 			O.heal_damage(-amount, 0, internal = 0, robo_repair = O.is_robotic(), updating_health = updating_health)
@@ -126,7 +124,7 @@
 		var/obj/item/organ/external/O = get_organ(organ_name)
 
 		if(amount > 0)
-			O.receive_damage(0, amount, sharp=is_sharp(damage_source), used_weapon=damage_source, forbidden_limbs = list(), ignore_resists = FALSE, updating_health = updating_health)
+			O.receive_damage(0, amount, sharp = damage_source.sharp, used_weapon = damage_source, forbidden_limbs = list(), ignore_resists = FALSE, updating_health = updating_health)
 		else
 			//if you don't want to heal robot organs, they you will have to check that yourself before using this proc.
 			O.heal_damage(0, -amount, internal = 0, robo_repair = O.is_robotic(), updating_health = updating_health)
@@ -243,7 +241,7 @@
 //It automatically updates health status
 /mob/living/carbon/human/heal_organ_damage(brute, burn, updating_health = TRUE)
 	var/list/obj/item/organ/external/parts = get_damaged_organs(brute,burn)
-	if(!parts.len)
+	if(!length(parts))
 		return
 	var/obj/item/organ/external/picked = pick(parts)
 	if(picked.heal_damage(brute,burn, updating_health))
@@ -254,7 +252,7 @@
 //It automatically updates health status
 /mob/living/carbon/human/take_organ_damage(brute, burn, updating_health = TRUE, sharp = FALSE, edge = 0)
 	var/list/obj/item/organ/external/parts = get_damageable_organs()
-	if(!parts.len)
+	if(!length(parts))
 		return
 	var/obj/item/organ/external/picked = pick(parts)
 	if(picked.receive_damage(brute, burn, sharp, updating_health))
@@ -266,7 +264,7 @@
 	var/list/obj/item/organ/external/parts = get_damaged_organs(brute,burn)
 
 	var/update = 0
-	while(parts.len && ( brute > 0 || burn > 0) )
+	while(length(parts) && ( brute > 0 || burn > 0))
 		var/obj/item/organ/external/picked = pick(parts)
 
 		var/brute_was = picked.brute_dam
@@ -291,10 +289,10 @@
 	var/list/obj/item/organ/external/parts = get_damageable_organs()
 
 	var/update = 0
-	while(parts.len && (brute>0 || burn>0) )
+	while(length(parts) && (brute>0 || burn>0))
 		var/obj/item/organ/external/picked = pick(parts)
-		var/brute_per_part = brute/parts.len
-		var/burn_per_part = burn/parts.len
+		var/brute_per_part = brute / length(parts)
+		var/burn_per_part = burn / length(parts)
 
 		var/brute_was = picked.brute_dam
 		var/burn_was = picked.burn_dam
@@ -326,7 +324,7 @@ This function restores all organs.
 
 /mob/living/carbon/human/proc/HealDamage(zone, brute, burn)
 	var/obj/item/organ/external/E = get_organ(zone)
-	if(isorgan(E))
+	if(is_external_organ(E))
 		if(E.heal_damage(brute, burn))
 			UpdateDamageIcon()
 	else

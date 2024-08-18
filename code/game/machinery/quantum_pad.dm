@@ -30,9 +30,29 @@
 	preset_target = /obj/machinery/quantumpad/cere/science_arrivals
 /obj/machinery/quantumpad/cere/arrivals_cargo
 	preset_target = /obj/machinery/quantumpad/cere/cargo_arrivals
+/obj/machinery/quantumpad/cere/security_medbay
+	preset_target = /obj/machinery/quantumpad/cere/medbay_security
+/obj/machinery/quantumpad/cere/medbay_security
+	preset_target = /obj/machinery/quantumpad/cere/security_medbay
+/obj/machinery/quantumpad/cere/medbay_science
+	preset_target = /obj/machinery/quantumpad/cere/science_medbay
+/obj/machinery/quantumpad/cere/science_medbay
+	preset_target = /obj/machinery/quantumpad/cere/medbay_science
+/obj/machinery/quantumpad/cere/arrivals_service
+	preset_target = /obj/machinery/quantumpad/cere/service_arrivals
+/obj/machinery/quantumpad/cere/service_arrivals
+	preset_target = /obj/machinery/quantumpad/cere/arrivals_service
+/obj/machinery/quantumpad/cere/cargo_service
+	preset_target = /obj/machinery/quantumpad/cere/service_cargo
+/obj/machinery/quantumpad/cere/service_cargo
+	preset_target = /obj/machinery/quantumpad/cere/cargo_service
+
 
 /obj/machinery/quantumpad/Initialize(mapload)
 	. = ..()
+	PopulateParts()
+
+/obj/machinery/quantumpad/proc/PopulateParts()
 	component_parts = list()
 	component_parts += new /obj/item/circuitboard/quantumpad(null)
 	component_parts += new /obj/item/stack/ore/bluespace_crystal/artificial(null)
@@ -44,6 +64,12 @@
 /obj/machinery/quantumpad/cere/Initialize(mapload)
 	. = ..()
 	linked_pad = locate(preset_target)
+
+/obj/machinery/quantumpad/cere/PopulateParts()
+	// No parts in Cere telepads, just hardcode the efficiencies
+	power_efficiency = 4
+	teleport_speed = 10
+	teleport_cooldown = 0
 
 /obj/machinery/quantumpad/Destroy()
 	linked_pad = null
@@ -61,11 +87,6 @@
 	teleport_speed -= (E*10)
 	teleport_cooldown = initial(teleport_cooldown)
 	teleport_cooldown -= (E * 100)
-
-/obj/machinery/quantumpad/attackby(obj/item/I, mob/user, params)
-	if(exchange_parts(user, I))
-		return
-	return ..()
 
 /obj/machinery/quantumpad/crowbar_act(mob/user, obj/item/I)
 	. = TRUE
@@ -95,7 +116,8 @@
 		return
 	default_deconstruction_screwdriver(user, "pad-idle-o", "qpad-idle", I)
 
-/obj/machinery/quantumpad/attack_hand(mob/user)
+/obj/machinery/quantumpad/proc/check_usable(mob/user)
+	. = FALSE
 	if(panel_open)
 		to_chat(user, "<span class='warning'>The panel must be closed before operating this machine!</span>")
 		return
@@ -119,8 +141,32 @@
 	if(linked_pad.stat & NOPOWER)
 		to_chat(user, "<span class='warning'>Linked pad is not responding to ping.</span>")
 		return
+	return TRUE
+
+/obj/machinery/quantumpad/attack_hand(mob/user)
+	if(isAI(user))
+		return
+	if(!check_usable(user))
+		return
 	add_fingerprint(user)
 	doteleport(user)
+
+/obj/machinery/quantumpad/attack_ai(mob/user)
+	if(isrobot(user))
+		return attack_hand(user)
+	var/mob/living/silicon/ai/AI = user
+	if(!istype(AI))
+		return
+	if(AI.eyeobj.loc != loc)
+		AI.eyeobj.setLoc(get_turf(loc))
+		return
+	if(!check_usable(user))
+		return
+	var/turf/T = get_turf(linked_pad)
+	if(GLOB.cameranet && GLOB.cameranet.checkTurfVis(T))
+		AI.eyeobj.setLoc(T)
+	else
+		to_chat(user, "<span class='warning'>Linked pad is not on or near any active cameras on the station.</span>")
 
 /obj/machinery/quantumpad/proc/sparks()
 	do_sparks(5, 1, get_turf(src))

@@ -6,27 +6,31 @@
 		return " (as [get_id_name("Unknown")])"
 	return ..()
 
-/mob/living/carbon/human/say_understands(mob/other, datum/language/speaking = null)
+/mob/living/carbon/human/say_understands(atom/movable/other, datum/language/speaking = null)
 	if(dna.species.can_understand(other))
-		return 1
+		return TRUE
 
 	//These only pertain to common. Languages are handled by mob/say_understands()
-	if(!speaking)
+	if(!speaking && ismob(other))
 		if(isnymph(other))
-			if(other.languages.len >= 2) //They've sucked down some blood and can speak common now.
-				return 1
+			var/mob/nymph = other
+			if(length(nymph.languages) >= 2) //They've sucked down some blood and can speak common now.
+				return TRUE
 		if(issilicon(other))
-			return 1
+			return TRUE
 		if(isbot(other))
-			return 1
+			return TRUE
 		if(isbrain(other))
-			return 1
+			return TRUE
 		if(isslime(other))
-			return 1
+			return TRUE
 
 	return ..()
 
 /mob/living/carbon/human/proc/HasVoiceChanger()
+	var/datum/status_effect/magic_disguise/S = has_status_effect(/datum/status_effect/magic_disguise)
+	if(S && S.disguise && S.disguise.name)
+		return S.disguise.name
 	for(var/obj/item/gear in list(wear_mask, wear_suit, head))
 		if(!gear)
 			continue
@@ -64,17 +68,17 @@
 		return TRUE
 	// how do species that don't breathe talk? magic, that's what.
 	var/breathes = (!HAS_TRAIT(src, TRAIT_NOBREATH))
-	var/obj/item/organ/internal/L = get_organ_slot("lungs")
+	var/datum/organ/lungs/L = get_int_organ_datum(ORGAN_DATUM_LUNGS)
 	if(HAS_TRAIT(src, TRAIT_MUTE))
 		return FALSE
-	if((breathes && !L) || breathes && L && (L.status & ORGAN_DEAD))
-		return FALSE
-	if(getOxyLoss() > 10 || AmountLoseBreath() >= 8 SECONDS)
-		emote("gasp")
+	if(breathes && (!L || L.linked_organ.status & ORGAN_DEAD))
 		return FALSE
 	if(mind)
 		return !mind.miming
 	return TRUE
+
+/mob/living/carbon/human/cannot_speak_loudly()
+	return getOxyLoss() > 10 || AmountLoseBreath() >= 8 SECONDS
 
 /mob/living/carbon/human/proc/SetSpecialVoice(new_voice)
 	if(new_voice)
@@ -115,7 +119,8 @@ GLOBAL_LIST_INIT(soapy_words, list(
 /mob/living/carbon/human/handle_speech_problems(list/message_pieces, verb)
 	var/span = ""
 	var/obj/item/organ/internal/cyberimp/brain/speech_translator/translator = locate(/obj/item/organ/internal/cyberimp/brain/speech_translator) in internal_organs
-	if(translator)
+
+	if(translator && !HAS_TRAIT(src, TRAIT_MUTE))
 		if(translator.active)
 			span = translator.speech_span
 			for(var/datum/multilingual_say_piece/S in message_pieces)
@@ -155,13 +160,13 @@ GLOBAL_LIST_INIT(soapy_words, list(
 		var/braindam = getBrainLoss()
 		if(braindam >= 60)
 			if(prob(braindam / 4))
-				S.message = stutter(S.message)
+				S.message = stutter(S.message, getStaminaLoss(), ismachineperson(src))
 				verb = "gibbers"
-			if(prob(braindam))
+			else if(prob(braindam / 2))
 				S.message = uppertext(S.message)
 				verb = "yells loudly"
 
-		if(span)
+		if(span && !speaks_ooc)
 			S.message = "<span class='[span]'>[S.message]</span>"
 
 	if(wear_mask)
@@ -237,7 +242,7 @@ GLOBAL_LIST_INIT(soapy_words, list(
 	if(dna.species.speech_sounds && prob(dna.species.speech_chance))
 		returns[1] = sound(pick(dna.species.speech_sounds))
 		returns[2] = 50
-		returns[3] = get_age_pitch()
+		returns[3] = get_age_pitch(dna.species.max_age)
 	return returns
 
 /mob/living/carbon/human/binarycheck()

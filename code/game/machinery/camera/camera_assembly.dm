@@ -61,7 +61,7 @@
 		return ..()
 
 /obj/item/camera_assembly/crowbar_act(mob/user, obj/item/I)
-	if(!upgrades.len)
+	if(!length(upgrades))
 		return
 	. = TRUE
 	if(!I.use_tool(src, user, 0, volume = I.tool_volume))
@@ -87,7 +87,7 @@
 		return
 
 	var/list/tempnetwork = splittext(input, ",")
-	if(tempnetwork.len < 1)
+	if(length(tempnetwork) < 1)
 		state = ASSEMBLY_WIRED
 		to_chat(usr, "<span class='warning'>No network found please hang up and try your call again.</span>")
 		return
@@ -96,16 +96,15 @@
 	var/temptag = "[sanitize(camera_area.name)] ([rand(1, 999)])"
 	input = strip_html(input(usr, "How would you like to name the camera?", "Set Camera Name", temptag))
 	state = ASSEMBLY_BUILT
-	var/obj/machinery/camera/C = new(loc)
+	var/list/network_list = uniquelist(tempnetwork)
+	var/list/visible_networks = difflist(network_list, GLOB.restricted_camera_networks)
+	var/obj/machinery/camera/C = new(loc, length(visible_networks) > 0)
 	loc = C
 	C.assembly = src
 
 	C.auto_turn()
 
-	C.network = uniquelist(tempnetwork)
-	tempnetwork = difflist(C.network,GLOB.restricted_camera_networks)
-	if(!tempnetwork.len) // Camera isn't on any open network - remove its chunk from AI visibility.
-		GLOB.cameranet.removeCamera(C)
+	C.network = network_list
 
 	C.c_tag = input
 
@@ -114,7 +113,7 @@
 		if(direct != "LEAVE IT")
 			C.dir = text2dir(direct)
 		if(i != 0)
-			var/confirm = alert(user, "Is this what you want? Chances Remaining: [i]", "Confirmation", "Yes", "No")
+			var/confirm = tgui_alert(user, "Is this what you want? Chances Remaining: [i]", "Confirmation", list("Yes", "No"))
 			if(confirm == "Yes")
 				break
 

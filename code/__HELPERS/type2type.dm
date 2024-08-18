@@ -21,7 +21,7 @@
 		var/char = copytext(hex, i, i + 1)
 		switch(char)
 			if("0")
-				//Apparently, switch works with empty statements, yay! If that doesn't work, blame me, though. -- Urist
+				pass() // Do nothing
 			if("9", "8", "7", "6", "5", "4", "3", "2", "1")
 				num += text2num(char) * 16 ** power
 			if("a", "A")
@@ -70,20 +70,14 @@
 	return num_list
 
 //Splits the text of a file at seperator and returns them in a list.
-/proc/file2list(filename, seperator="\n")
-	return splittext(return_file_text(filename),seperator)
-
-
-//Turns a direction into text
-
-/proc/num2dir(direction)
-	switch(direction)
-		if(1.0) return NORTH
-		if(2.0) return SOUTH
-		if(4.0) return EAST
-		if(8.0) return WEST
-		else
-			stack_trace("UNKNOWN DIRECTION: [direction]")
+/proc/file2list(filename, separator = "\n", no_empty = TRUE)
+	var/list/result = list()
+	for(var/line in splittext(return_file_text(filename), separator))
+		var/text = trim(line)
+		if(no_empty && !text)
+			continue
+		result += text
+	return result
 
 /proc/dir2text(direction)
 	switch(direction)
@@ -103,8 +97,6 @@
 			return "northwest"
 		if(10.0)
 			return "southwest"
-		else
-	return
 
 //Turns text into proper directions
 /proc/text2dir(direction)
@@ -125,12 +117,10 @@
 			return 6
 		if("SOUTHWEST")
 			return 10
-		else
-	return
 
 //Converts an angle (degrees) into an ss13 direction
 /proc/angle2dir(degree)
-	degree = ((degree+22.5)%365)
+	degree = (degree + 22.5) % 360
 	if(degree < 45)		return NORTH
 	if(degree < 90)		return NORTHEAST
 	if(degree < 135)	return EAST
@@ -197,7 +187,6 @@
 	if(rights & R_MENTOR)		. += "[seperator]+MENTOR"
 	if(rights & R_VIEWRUNTIMES)	. += "[seperator]+VIEWRUNTIMES"
 	if(rights & R_MAINTAINER)	. += "[seperator]+MAINTAINER"
-	return .
 
 /proc/ui_style2icon(ui_style)
 	switch(ui_style)
@@ -211,6 +200,8 @@
 			return 'icons/mob/screen_operative.dmi'
 		if("White")
 			return 'icons/mob/screen_white.dmi'
+		if("Midnight")
+			return 'icons/mob/screen_midnight.dmi'
 		else
 			return 'icons/mob/screen_midnight.dmi'
 
@@ -315,7 +306,7 @@
 		if(entry == null)
 			return null
 		matrix_list += entry
-	if(matrix_list.len < 6)
+	if(length(matrix_list) < 6)
 		return null
 	var/a = matrix_list[1]
 	var/b = matrix_list[2]
@@ -376,3 +367,8 @@
 			else
 				return /datum
 	return text2path(copytext(string_type, 1, last_slash))
+
+/proc/text2bool(input)
+	if(input == "true")
+		return TRUE
+	return FALSE //

@@ -49,7 +49,7 @@
 
 	//Checks to make sure he's not in space doing it, and that the area got proper power.
 	var/area/A = get_area(src)
-	if(!istype(A) || !A.powernet.equipment_powered)
+	if(!istype(A) || !A.powernet.has_power(PW_CHANNEL_EQUIPMENT))
 		to_chat(user, "<span class='warning'>[src] blinks red as you try to insert [G].</span>")
 		return
 
@@ -91,19 +91,15 @@
 
 /obj/machinery/recharger/wrench_act(mob/user, obj/item/I)
 	. = TRUE
+	if(istype(src, /obj/machinery/recharger/wallcharger))	// Unwrenching wall rechargers and dragging them off all kinds of cursed.
+		return
 	if(panel_open)
 		to_chat(user, "<span class='warning'>Close the maintenance panel first!</span>")
 		return
 	if(charging)
 		to_chat(user, "<span class='warning'>Remove the charging item first!</span>")
 		return
-	if(!I.use_tool(src, user, 0, volume = I.tool_volume))
-		return
-	anchored = !anchored
-	if(anchored)
-		WRENCH_ANCHOR_MESSAGE
-	else
-		WRENCH_UNANCHOR_MESSAGE
+	default_unfasten_wrench(user, I, 0)
 
 /obj/machinery/recharger/attack_hand(mob/user)
 	if(issilicon(user))
@@ -231,6 +227,9 @@
 	else
 		recharge_cell(C, RECHARGER_POWER_USAGE_MISC)
 
+	if(!check_cell_needs_recharging(C)) // we recharged cell, does it still need power? If no, recharger should blink yellow
+		return FALSE
+
 	return TRUE
 
 /obj/machinery/recharger/examine(mob/user)
@@ -246,7 +245,7 @@
 			var/obj/item/stock_parts/cell/C = charging.get_cell()
 			. += "<span class='notice'>The status display reads:<span>"
 			if(using_power)
-				. += "<span class='notice'>- Recharging <b>[(C.chargerate/C.maxcharge)*100]%</b> cell charge per cycle.<span>"
+				. += "<span class='notice'>- Recharging <b>[((C.chargerate * recharge_coeff) / C.maxcharge) * 100]%</b> cell charge per cycle.<span>"
 			if(charging)
 				. += "<span class='notice'>- \The [charging]'s cell is at <b>[C.percent()]%</b>.<span>"
 
@@ -255,6 +254,13 @@
 	name = "wall recharger"
 	icon_state = "wrecharger0"
 	base_icon_state = "wrecharger"
+
+/obj/machinery/recharger/wallcharger/upgraded/Initialize(mapload)
+	. = ..()
+	component_parts = list()
+	component_parts += new /obj/item/circuitboard/recharger(null)
+	component_parts += new /obj/item/stock_parts/capacitor/super(null)
+	RefreshParts()
 
 #undef RECHARGER_POWER_USAGE_GUN
 #undef RECHARGER_POWER_USAGE_MISC

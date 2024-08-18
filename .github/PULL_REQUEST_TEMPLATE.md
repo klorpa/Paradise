@@ -1,3 +1,5 @@
+<!-- By ticking or leaving ticked the option "Allow edits and access to secrets by maintainers" you give permission for repository maintainers to push changes to your branch without explicitly asking. -->
+
 <!-- Write **BELOW** The Headers and **ABOVE** The comments else it may not be viewable. -->
 <!-- You can view Contributing.MD for a detailed description of the pull request process. -->
 
@@ -14,6 +16,13 @@
 
 ## Testing
 <!-- How did you test the PR, if at all? -->
+
+<hr>
+
+### Declaration
+- [ ] I confirm that I either do not require [pre-approval](/CODE_OF_CONDUCT.md#types-of-changes-that-need-approval) for this PR, or I have obtained such approval and have included a screenshot to demonstrate this below.
+<!-- Replace the box with [x] to mark as complete. -->
+<hr>
 
 ## Changelog
 :cl:
